@@ -33,7 +33,7 @@ CUDA_LIBPATH=/usr/local/cuda/lib64
 
 #no warnings otherwise thrust explodes output
 
-NVCC_OPTS=-O3 -arch=sm_20 -m64
+NVCC_OPTS=-O3 -arch=sm_30 -m64
 
 GCC_OPTS=-O3 -m64
 

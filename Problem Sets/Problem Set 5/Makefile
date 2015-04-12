@@ -1,5 +1,41 @@
-NVCC=nvcc
-NVCC_OPTS=-O3 -arch=sm_30 -Xcompiler -Wall -Xcompiler -Wextra -m64
+NVCC=/usr/local/cuda/bin/nvcc
+#NVCC=nvcc
+
+###################################
+# These are the default install   #
+# locations on most linux distros #
+###################################
+
+OPENCV_LIBPATH=/usr/local/lib
+OPENCV_INCLUDEPATH=/usr/local/include
+
+###################################################
+# On Macs the default install locations are below #
+###################################################
+
+#OPENCV_LIBPATH=/usr/local/lib
+#OPENCV_INCLUDEPATH=/usr/local/include
+
+OPENCV_LIBS=-lopencv_core -lopencv_imgproc -lopencv_highgui
+
+CUDA_INCLUDEPATH=/usr/local/cuda/include
+# CUDA_INCLUDEPATH=/usr/local/cuda/lib64/include
+# CUDA_INCLUDEPATH=/usr/local/cuda/include
+# CUDA_INCLUDEPATH=/Developer/NVIDIA/CUDA-5.0/include
+
+######################################################
+# On Macs the default install locations are below    #
+# ####################################################
+
+#CUDA_INCLUDEPATH=/usr/local/cuda/include
+#CUDA_LIBPATH=/usr/local/cuda/lib
+CUDA_LIBPATH=/usr/local/cuda/lib64
+
+#no warnings otherwise thrust explodes output
+
+NVCC_OPTS=-O3 -arch=sm_30 -m64
+
+GCC_OPTS=-O3 -m64
 
 histo: main.cu reference_calc.o student.o Makefile
 	nvcc -o HW5 main.cu reference_calc.o student.o $(NVCC_OPTS)

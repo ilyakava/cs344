@@ -23,3 +23,6 @@ cmake ..
 make
 ```
 
+# Links
+
+- [Udacity forum](https://discussions.udacity.com/c/standalone-courses/intro-to-parallel-programming)

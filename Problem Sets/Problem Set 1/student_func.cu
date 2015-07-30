@@ -51,7 +51,8 @@ void rgba_to_greyscale(const uchar4* const rgbaImage,
   //to an absolute 2D location in the image, then use that to
   //calculate a 1D offset
   uchar4 rgbpx = *(rgbaImage + numCols * blockIdx.x + threadIdx.x);
-  greyImage = 0.299f * rgbpx.x + 0.587f * rgbpx.y + 0.114f * rgbpx.z;
+  unsigned char greypx = *(greyImage + numCols * blockIdx.x + threadIdx.x);
+  greypx = (unsigned char)(0.299f * rgbpx.x + 0.587f * rgbpx.y + 0.114f * rgbpx.z);
 }
 
 void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage, uchar4 * const d_rgbaImage,

@@ -53,7 +53,8 @@ void rgba_to_greyscale(const uchar4* const rgbaImage,
   int offset = numCols * blockIdx.x + threadIdx.x;
   uchar4 rgbpx = *(rgbaImage + offset);
   unsigned char greypx = *(greyImage + offset);
-  greypx = (unsigned char)(0.299f * rgbpx.x + 0.587f * rgbpx.y + 0.114f * rgbpx.z);
+  // greypx = (unsigned char)(0.299f * rgbpx.x + 0.587f * rgbpx.y + 0.114f * rgbpx.z);
+  greypx = (unsigned char)(255);
 }
 
 void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage, uchar4 * const d_rgbaImage,

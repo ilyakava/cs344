@@ -144,13 +144,13 @@ void gaussian_blur(const unsigned char* const inputChannel,
 
       if (i_i < numRows && i_j < numCols) {
         float weight = filter[i*filterWidth + j];
-        acc = acc + weight * inputChannel[i_i*numRows + i_j];
+        acc = acc + weight * inputChannel[i_i*numCols + i_j];
       }
     }
   }
 
   // __syncthreads();
-  outputChannel[c_i*numRows + c_j] = (int)acc;
+  outputChannel[c_i*numCols + c_j] = (int)acc;
 }
 
 //This kernel takes in an image represented as a uchar4 and splits
@@ -177,7 +177,7 @@ void separateChannels(const uchar4* const inputImageRGBA,
   if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
     return;
   }
-  const int i = blockIdx.x * numRows + threadIdx.x;
+  const int i = blockIdx.x * numCols + threadIdx.x;
   const uchar4 px = inputImageRGBA[i];
   redChannel[i] = px.x;
   greenChannel[i] = px.y;

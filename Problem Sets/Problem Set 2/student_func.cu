@@ -1,4 +1,3 @@
-#include <stdio.h>
 // Homework 2
 // Image Blurring
 //
@@ -179,7 +178,6 @@ void separateChannels(const uchar4* const inputImageRGBA,
     return;
   }
   const int i = blockIdx.x * numCols + threadIdx.x;
-  printf("pixel number %i\n", i);
   const uchar4 px = inputImageRGBA[i];
   redChannel[i] = px.x;
   greenChannel[i] = px.y;

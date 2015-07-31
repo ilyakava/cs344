@@ -26,3 +26,4 @@ make
 # Links
 
 - [Udacity forum](https://discussions.udacity.com/c/standalone-courses/intro-to-parallel-programming)
+- [upenn class](http://cis565-fall-2014.github.io)

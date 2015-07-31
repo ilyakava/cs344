@@ -150,7 +150,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   }
 
   // __syncthreads();
-  outputChannel[c_i*numCols + c_j] = inputChannel[c_i*numCols + c_j];
+  outputChannel[c_i*numCols + c_j] = (int)acc;
 }
 
 //This kernel takes in an image represented as a uchar4 and splits

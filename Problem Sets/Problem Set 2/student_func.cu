@@ -125,8 +125,8 @@ void gaussian_blur(const unsigned char* const inputChannel,
   if ( blockIdx.x >= numCols || threadIdx.x >= numRows ) {
     return;
   }
-  c_i = blockIdx.x; // center
-  c_j = threadIdx.x;
+  int c_i = blockIdx.x; // center
+  int c_j = threadIdx.x;
   // NOTE: If a thread's absolute position 2D position is within the image, but some of
   // its neighbors are outside the image, then you will need to be extra careful. Instead
   // of trying to read such a neighbor value from GPU memory (which won't work because
@@ -135,8 +135,8 @@ void gaussian_blur(const unsigned char* const inputChannel,
   // to sequential reference solution for the exact clamping semantics you should follow.
   const int filterCenter = 1 + int(filterWidth / 2.0f);
   float acc = 0.0f;
-  for (i=0;i<filterWidth;i++) {
-    for (j=0;j<filterWidth;j++) {
+  for (int i=0;i<filterWidth;i++) {
+    for (int j=0;j<filterWidth;j++) {
       int f_i = i - filterCenter;
       int f_j = j - filterCenter;
       int i_i = c_i + f_i;

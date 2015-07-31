@@ -1,3 +1,4 @@
+#include <stdio.h>
 // Homework 2
 // Image Blurring
 //

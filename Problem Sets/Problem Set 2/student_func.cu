@@ -133,7 +133,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   // the value is out of bounds), you should explicitly clamp the neighbor values you read
   // to be within the bounds of the image. If this is not clear to you, then please refer
   // to sequential reference solution for the exact clamping semantics you should follow.
-  const int filterCenter = 1 + int(filterWidth / 2.0f);
+  const int filterCenter = int(filterWidth / 2.0f);
   float acc = 0.0f;
   for (int i=0;i<filterWidth;i++) {
     int f_i = i - filterCenter; // filter_i

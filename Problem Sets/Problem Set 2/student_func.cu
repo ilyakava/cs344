@@ -199,7 +199,7 @@ void recombineChannels(const unsigned char* const redChannel,
                                         blockIdx.y * blockDim.y + threadIdx.y);
 
   // const int thread_1D_pos = thread_2D_pos.x * numCols + thread_2D_pos.x;
-  const int thread_1D_pos = thread_2D_pos.x * numCols + thread_2D_pos.x;
+  const int thread_1D_pos = blockIdx.x * numCols + threadIdx.x;
 
   //make sure we don't try and access memory outside the image
   //by having any threads mapped there return early

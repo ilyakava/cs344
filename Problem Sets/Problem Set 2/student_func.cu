@@ -122,10 +122,15 @@ void gaussian_blur(const unsigned char* const inputChannel,
   // {
   //     return;
   // }
-  if ( blockIdx.x >= numRows || threadIdx.x >= numCols )
+  // becomes the (j,i) in the image
+  const int2 thread_2D_pos = make_int2( blockIdx.x * blockDim.x + threadIdx.x,
+                                        blockIdx.y * blockDim.y + threadIdx.y);
+  if ( thread_2D_pos.y >= numRows || thread_2D_pos.x >= numCols )
     return;
-  int c_i = blockIdx.x; // center_i
-  int c_j = threadIdx.x;
+  const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
+
+  int c_i = thread_2D_pos.y; // center_i
+  int c_j = thread_2D_pos.x;
   // NOTE: If a thread's absolute position 2D position is within the image, but some of
   // its neighbors are outside the image, then you will need to be extra careful. Instead
   // of trying to read such a neighbor value from GPU memory (which won't work because
@@ -173,13 +178,18 @@ void separateChannels(const uchar4* const inputImageRGBA,
   // {
   //     return;
   // }
-  if ( blockIdx.x >= numRows || threadIdx.x >= numCols )
+
+  // becomes the (j,i) in the image
+  const int2 thread_2D_pos = make_int2( blockIdx.x * blockDim.x + threadIdx.x,
+                                        blockIdx.y * blockDim.y + threadIdx.y);
+  if ( thread_2D_pos.y >= numRows || thread_2D_pos.x >= numCols )
     return;
-  const int i = blockIdx.x * numCols + threadIdx.x;
-  const uchar4 px = inputImageRGBA[i];
-  redChannel[i] = px.x;
-  greenChannel[i] = px.y;
-  blueChannel[i] = px.z;
+  const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
+
+  const uchar4 px = inputImageRGBA[thread_1D_pos];
+  redChannel[thread_1D_pos] = px.x;
+  greenChannel[thread_1D_pos] = px.y;
+  blueChannel[thread_1D_pos] = px.z;
 }
 
 //This kernel takes in three color channels and recombines them
@@ -196,15 +206,15 @@ void recombineChannels(const unsigned char* const redChannel,
   const int2 thread_2D_pos = make_int2( blockIdx.x * blockDim.x + threadIdx.x,
                                         blockIdx.y * blockDim.y + threadIdx.y);
 
-  // const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
-  const int thread_1D_pos = blockIdx.x * numCols + threadIdx.x;
+  const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
+  // const int thread_1D_pos = blockIdx.x * numCols + threadIdx.x;
 
   //make sure we don't try and access memory outside the image
   //by having any threads mapped there return early
-  // if (thread_2D_pos.x >= numCols || thread_2D_pos.y >= numRows)
-  //   return;
-  if ( blockIdx.x >= numRows || threadIdx.x >= numCols )
+  if (thread_2D_pos.x >= numCols || thread_2D_pos.y >= numRows)
     return;
+  // if ( blockIdx.x >= numRows || threadIdx.x >= numCols )
+  //   return;
 
   unsigned char red   = redChannel[thread_1D_pos];
   unsigned char green = greenChannel[thread_1D_pos];
@@ -254,12 +264,13 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
                         const int filterWidth)
 {
   //TODO: Set reasonable block size (i.e., number of threads per block)
-  const dim3 blockSize(numCols, 1, 1);
+  // const dim3 blockSize(numCols, 1, 1);
+  const dim3 blockSize(32, 16, 1); // 512 threads
 
   //TODO:
   //Compute correct grid size (i.e., number of blocks per kernel launch)
   //from the image size and and block size.
-  const dim3 gridSize(numRows, 1, 1);
+  const dim3 gridSize(1 + numCols / blockSize.x, 1 + numRows / blockSize.y, 1);
 
   //TODO: Launch a kernel for separating the RGBA image into different color channels
   // AoS so each pixel goes into a kernel (each block will do 1 row, each thread will do 1 px)

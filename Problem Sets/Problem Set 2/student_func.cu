@@ -122,7 +122,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   // {
   //     return;
   // }
-  if ( blockIdx.x >= numCols || threadIdx.x >= numRows ) {
+  if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
     return;
   }
   int c_i = blockIdx.x; // center
@@ -174,7 +174,7 @@ void separateChannels(const uchar4* const inputImageRGBA,
   // {
   //     return;
   // }
-  if ( blockIdx.x >= numCols || threadIdx.x >= numRows ) {
+  if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
     return;
   }
   const int i = blockIdx.x * numRows + threadIdx.x;

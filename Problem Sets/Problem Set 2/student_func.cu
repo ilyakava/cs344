@@ -138,11 +138,11 @@ void gaussian_blur(const unsigned char* const inputChannel,
   for (int i=0;i<filterWidth;i++) {
     int f_i = i - filterCenter; // filter_i
     int i_i = c_i + f_i; // image_i
-    int pi_i = min(numRows, max(0, i_i)); // paddedImage_i
+    int pi_i = min(numRows-1, max(0, i_i)); // paddedImage_i
     for (int j=0;j<filterWidth;j++) {
       int f_j = j - filterCenter;
       int i_j = c_j + f_j;
-      int pi_j = min(numCols, max(0, i_j));
+      int pi_j = min(numCols-1, max(0, i_j));
 
       float weight = filter[i*filterWidth + j];
       acc = acc + weight * inputChannel[pi_i*numCols + pi_j];

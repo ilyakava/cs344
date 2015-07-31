@@ -122,9 +122,9 @@ void gaussian_blur(const unsigned char* const inputChannel,
   // {
   //     return;
   // }
-  if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
-    return;
-  }
+  // if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
+  //   return;
+  // }
   int c_i = blockIdx.x; // center
   int c_j = threadIdx.x;
   // NOTE: If a thread's absolute position 2D position is within the image, but some of
@@ -174,9 +174,9 @@ void separateChannels(const uchar4* const inputImageRGBA,
   // {
   //     return;
   // }
-  if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
-    return;
-  }
+  // if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
+  //   return;
+  // }
   const int i = blockIdx.x * numCols + threadIdx.x;
   const uchar4 px = inputImageRGBA[i];
   redChannel[i] = px.x;

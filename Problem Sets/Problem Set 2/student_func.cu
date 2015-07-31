@@ -125,7 +125,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   if ( blockIdx.x >= numRows || threadIdx.x >= numCols ) {
     return;
   }
-  int c_i = blockIdx.x; // center
+  int c_i = blockIdx.x; // center_i
   int c_j = threadIdx.x;
   // NOTE: If a thread's absolute position 2D position is within the image, but some of
   // its neighbors are outside the image, then you will need to be extra careful. Instead
@@ -136,16 +136,16 @@ void gaussian_blur(const unsigned char* const inputChannel,
   const int filterCenter = 1 + int(filterWidth / 2.0f);
   float acc = 0.0f;
   for (int i=0;i<filterWidth;i++) {
+    int f_i = i - filterCenter; // filter_i
+    int i_i = c_i + f_i; // image_i
+    int pi_i = fmin(numRows, fmax(0, i_i)); // paddedImage_i
     for (int j=0;j<filterWidth;j++) {
-      int f_i = i - filterCenter;
       int f_j = j - filterCenter;
-      int i_i = c_i + f_i;
       int i_j = c_j + f_j;
+      int pi_j = fmin(numRows, fmax(0, i_j));
 
-      if (i_i > 0 && i_i < numRows && i_j > 0 && i_j < numCols) {
-        float weight = filter[i*filterWidth + j];
-        acc = acc + weight * inputChannel[i_i*numCols + i_j];
-      }
+      float weight = filter[i*filterWidth + j];
+      acc = acc + weight * inputChannel[pi_i*numCols + pi_j];
     }
   }
 

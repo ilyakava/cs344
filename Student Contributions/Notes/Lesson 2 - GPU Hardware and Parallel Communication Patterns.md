@@ -120,4 +120,11 @@ Will use stencil op (very common) for local averaging
 
 Problem with 1D grid with 1D blocks: `invalid configuration argument cudaGetLastError()` with a 5184x3456 image (`~/code/fundus/data/train/orig/6165_right.jpeg`)
 
-Move to 2D grid with 2D blocks (consider a matrix as a *grid* of *block* matrices, and each block matrix is a *thread* matrix).
+Move to 2D grid with 2D blocks (consider a matrix as a *grid* of *block* matrices, and each block matrix is a *thread* matrix) for scalability.
+
+| blockSize | time (ms) |
+|-----------|-----------|
+| 16,16,1   | 1.73      |
+| 16,32,1   | 1.81      |
+| 32,16,1   | 1.55      |
+| 32,32,1   | 1.62      |

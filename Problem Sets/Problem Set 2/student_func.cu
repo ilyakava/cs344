@@ -127,7 +127,6 @@ void gaussian_blur(const unsigned char* const inputChannel,
                                         blockIdx.y * blockDim.y + threadIdx.y);
   if ( thread_2D_pos.y >= numRows || thread_2D_pos.x >= numCols )
     return;
-  const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
 
   int c_i = thread_2D_pos.y; // center_i
   int c_j = thread_2D_pos.x;

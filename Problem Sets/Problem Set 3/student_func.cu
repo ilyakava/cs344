@@ -121,22 +121,22 @@ void global_histogram(const float* const d_logLuminance,
                       const size_t numCols,
                       const size_t numBins)
 {
-  dim2 thread_2D_pos = make_int2(blockDim.x * blockIdx.x + threadIdx.x,
+  int2 thread_2D_pos = make_int2(blockDim.x * blockIdx.x + threadIdx.x,
                                  blockDim.y * blockDim.y + threadIdx.y);
   int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
   if (thread_2D_pos.x > numCols || thread_2D_pos.y > numRows)
     return;
 
   int bin = (int)((d_logLuminance[thread_1D_pos] - min_logLum) / range_logLum * numBins);
-  atomicAdd((d_out + bin), 1)
+  atomicAdd((d_out + bin), 1);
 }
 
 __global__
-void hillis_steele_scan(unsigned int* const d_pdf)
+void hillis_steele_scan(unsigned int* const d_pdf, const size_t numBins)
 {
   int tid = threadIdx.x;
   // use left shift '<<' to multiply by 2 each iteration
-  for (unsigned int s = 1; s < theadDim.x; s <<= 1) {
+  for (unsigned int s = 1; s < numBins; s <<= 1) {
     int neighborid = tid - s;
     if (neighborid > 0)
       d_pdf[neighborid] += d_pdf[tid];
@@ -144,7 +144,7 @@ void hillis_steele_scan(unsigned int* const d_pdf)
   }
 }
 
-float *d_min_intermediate, *d_max_intermediate;
+float *d_min_intermediate, *d_max_intermediate, *d_min_final, *d_max_final;
 unsigned int* d_pdf;
 
 void your_histogram_and_prefixsum(const float* const d_logLuminance,
@@ -165,14 +165,18 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   checkCudaErrors(cudaMalloc(&d_min_intermediate, sizeof(float) * NUM_THREADS));
   shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_intermediate, numRows, numCols, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, min_logLum, numRows, numCols, 0);
+  checkCudaErrors(cudaMalloc(&d_min_final, sizeof(float)));
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_final, numRows, numCols, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  checkCudaErrors(cudaMemcpy(&min_logLum, d_min_final, sizeof(float), cudaMemcpyDeviceToHost));
   // max
   checkCudaErrors(cudaMalloc(&d_max_intermediate, sizeof(float) * NUM_THREADS));
   shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_intermediate, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, max_logLum, numRows, numCols, 1);
+  checkCudaErrors(cudaMalloc(&d_max_final, sizeof(float)));
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_final, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  checkCudaErrors(cudaMemcpy(&max_logLum, d_max_final, sizeof(float), cudaMemcpyDeviceToHost));
 
   // 2) subtract them to find the range
   float range_logLum = max_logLum - min_logLum;
@@ -185,7 +189,8 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
 
   // first lets try with atomicAdd
   // later: give every thread local bins, then reduce
-  global_histogram<<<gridDim, blockDim>>>(d_logLuminance, d_cdf, min_logLum, range_logLum, numRows, numCols);
+  global_histogram<<<gridDim, blockDim>>>(d_logLuminance, d_cdf, min_logLum, range_logLum, numRows, numCols, numBins);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 4) Perform an exclusive scan (prefix sum) on the histogram to get
   //    the cumulative distribution of luminance values (this should go in the
@@ -194,6 +199,7 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // we have 1024 bins, and we have 2880 Thread processors on a K40c, and
   // 512 on a M2090, so we have plenty of workers, want step efficiency over
   // work efficiency, will use Hillis & Steele
-  hillis_steele_scan<<<1, numBins>>>(d_cdf);
+  hillis_steele_scan<<<1, numBins>>>(d_cdf, numBins);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 }

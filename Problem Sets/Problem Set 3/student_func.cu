@@ -79,6 +79,7 @@
 
 */
 
+#include <stdio.h>
 #include "utils.h"
 
 #define NUM_THREADS 1024
@@ -121,13 +122,18 @@ void global_histogram(const float* const d_logLuminance,
                       const size_t numCols,
                       const size_t numBins)
 {
-  int2 thread_2D_pos = make_int2(blockDim.x * blockIdx.x + threadIdx.x,
-                                 blockDim.y * blockDim.y + threadIdx.y);
-  int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
-  if (thread_2D_pos.x > numCols || thread_2D_pos.y > numRows)
+  const int2 thread_2D_pos = make_int2( blockIdx.x * blockDim.x + threadIdx.x,
+                                        blockIdx.y * blockDim.y + threadIdx.y);
+  if ( thread_2D_pos.y >= numRows || thread_2D_pos.x >= numCols )
     return;
+  const unsigned int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
 
-  int bin = (int)((d_logLuminance[thread_1D_pos] - min_logLum) / range_logLum * numBins);
+  float ll = d_logLuminance[thread_1D_pos];
+  int bin = (int)((ll - min_logLum) / range_logLum * numBins);
+
+  // assert(min_logLum <= ll);
+  // assert((min_logLum + range_logLum) >= ll);
+
   atomicAdd((d_out + bin), 1);
 }
 
@@ -145,7 +151,6 @@ void hillis_steele_scan(unsigned int* const d_pdf, const size_t numBins)
 }
 
 float *d_min_intermediate, *d_max_intermediate, *d_min_final, *d_max_final;
-unsigned int* d_pdf;
 
 void your_histogram_and_prefixsum(const float* const d_logLuminance,
                                   unsigned int* const d_cdf,
@@ -166,7 +171,7 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_intermediate, numRows, numCols, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaMalloc(&d_min_final, sizeof(float)));
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_final, numRows, numCols, 0);
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_min_intermediate, d_min_final, numRows, numCols, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaMemcpy(&min_logLum, d_min_final, sizeof(float), cudaMemcpyDeviceToHost));
   // max
@@ -174,23 +179,34 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_intermediate, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaMalloc(&d_max_final, sizeof(float)));
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_final, numRows, numCols, 1);
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_max_intermediate, d_max_final, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaMemcpy(&max_logLum, d_max_final, sizeof(float), cudaMemcpyDeviceToHost));
 
   // 2) subtract them to find the range
+  printf("GPU min: %f\n", min_logLum);
+  printf("GPU max: %f\n", max_logLum);
   float range_logLum = max_logLum - min_logLum;
 
   // 3) generate a histogram of all the values in the logLuminance channel using
   //    the formula: bin = (lum[i] - lumMin) / lumRange * numBins
 
-  const dim3 blockDim(32,16,1);
-  const dim3 gridDim(numCols / blockDim.x, numRows / blockDim.y, 1);
+  const dim3 blockSize(32,16,1);
+  const dim3 gridSize(1 + numCols / blockSize.x, 1 + numRows / blockSize.y, 1);
 
   // first lets try with atomicAdd
   // later: give every thread local bins, then reduce
-  global_histogram<<<gridDim, blockDim>>>(d_logLuminance, d_cdf, min_logLum, range_logLum, numRows, numCols, numBins);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  global_histogram<<<gridSize, blockSize>>>(d_logLuminance, d_cdf, min_logLum, range_logLum, numRows, numCols, numBins);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+  // debug
+  // unsigned int bins[numBins];
+  // checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
+
+  // printf("PDF:\n");
+  // for (int i = 0; i < numBins; i++)
+  //   printf("%i", bins[i]);
 
   // 4) Perform an exclusive scan (prefix sum) on the histogram to get
   //    the cumulative distribution of luminance values (this should go in the
@@ -201,5 +217,6 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // work efficiency, will use Hillis & Steele
   hillis_steele_scan<<<1, numBins>>>(d_cdf, numBins);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  // TODO check if hillis steele is exclusive
 
 }

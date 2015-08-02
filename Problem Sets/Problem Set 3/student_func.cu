@@ -97,7 +97,7 @@ void shmem_min_max_reduce(const float * d_in, float * d_out, const size_t numRow
   s_in[tid] = d_in[offset];
   __syncthreads();
 
-  // use left shift '>>' to divide by 2 each iteration
+  // use right shift '>>' to divide by 2 each iteration
   for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (tid < s && (tid + s) < imgSize)
       if (maxMode) {
@@ -112,7 +112,40 @@ void shmem_min_max_reduce(const float * d_in, float * d_out, const size_t numRow
     d_out[blockIdx.x] = s_in[0];
 }
 
-float *d_min_intermediate[NUM_THREADS], *d_max_intermediate[NUM_THREADS];
+__global__
+void global_histogram(const float* const d_logLuminance,
+                      unsigned int* const d_out,
+                      const float min_logLum,
+                      const float range_logLum,
+                      const size_t numRows,
+                      const size_t numCols,
+                      const size_t numBins)
+{
+  dim2 thread_2D_pos = make_int2(blockDim.x * blockIdx.x + threadIdx.x,
+                                 blockDim.y * blockDim.y + threadIdx.y);
+  int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
+  if (thread_2D_pos.x > numCols || thread_2D_pos.y > numRows)
+    return;
+
+  int bin = (int)((d_logLuminance[thread_1D_pos] - min_logLum) / range_logLum * numBins);
+  atomicAdd((d_out + bin), 1)
+}
+
+__global__
+void hillis_steele_scan(unsigned int* const d_pdf)
+{
+  int tid = threadIdx.x;
+  // use left shift '<<' to multiply by 2 each iteration
+  for (unsigned int s = 1; s < theadDim.x; s <<= 1) {
+    int neighborid = tid - s;
+    if (neighborid > 0)
+      d_pdf[neighborid] += d_pdf[tid];
+    __syncthreads();
+  }
+}
+
+float *d_min_intermediate, *d_max_intermediate;
+unsigned int* d_pdf;
 
 void your_histogram_and_prefixsum(const float* const d_logLuminance,
                                   unsigned int* const d_cdf,
@@ -130,25 +163,29 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // two kernels, reduction to find min and max
   // min
   checkCudaErrors(cudaMalloc(&d_min_intermediate, sizeof(float) * NUM_THREADS));
-  shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_intermediate, numRows, numCols, 0)
+  shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_intermediate, numRows, numCols, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, min_logLum, numRows, numCols, 0)
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, min_logLum, numRows, numCols, 0);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // max
   checkCudaErrors(cudaMalloc(&d_max_intermediate, sizeof(float) * NUM_THREADS));
-  shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_intermediate, numRows, numCols, 1)
+  shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_intermediate, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, max_logLum, numRows, numCols, 1)
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, max_logLum, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 2) subtract them to find the range
-  float range = max_logLum - min_logLum;
+  float range_logLum = max_logLum - min_logLum;
 
   // 3) generate a histogram of all the values in the logLuminance channel using
   //    the formula: bin = (lum[i] - lumMin) / lumRange * numBins
 
+  const dim3 blockDim(32,16,1);
+  const dim3 gridDim(numCols / blockDim.x, numRows / blockDim.y, 1);
+
   // first lets try with atomicAdd
   // later: give every thread local bins, then reduce
+  global_histogram<<<gridDim, blockDim>>>(d_logLuminance, d_cdf, min_logLum, range_logLum, numRows, numCols);
 
   // 4) Perform an exclusive scan (prefix sum) on the histogram to get
   //    the cumulative distribution of luminance values (this should go in the
@@ -157,5 +194,6 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // we have 1024 bins, and we have 2880 Thread processors on a K40c, and
   // 512 on a M2090, so we have plenty of workers, want step efficiency over
   // work efficiency, will use Hillis & Steele
+  hillis_steele_scan<<<1, numBins>>>(d_cdf);
 
 }

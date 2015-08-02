@@ -105,3 +105,6 @@ Shared memory can save us global memory bandwidth (calculate by summing all read
         - find min/max with parallel reduce
         - use atomicAdd (at first)
     - scan histogram
+
+- Questions:
+    - how much shared memory are we limited to?

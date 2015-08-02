@@ -108,6 +108,9 @@ int main(int argc, char **argv) {
     max_logLum = std::max(h_luminance[i], max_logLum);
   }
 
+  printf("CPU min: %f\n", min_logLum);
+  printf("CPU max: %f\n", max_logLum);
+
   referenceCalculation(h_luminance, h_cdf, numRows, numCols, numBins, min_logLum, max_logLum);
 
   checkCudaErrors(cudaMemcpy(d_cdf, h_cdf, sizeof(unsigned int) * numBins, cudaMemcpyHostToDevice));

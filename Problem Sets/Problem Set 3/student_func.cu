@@ -153,7 +153,7 @@ void hillis_steele_exclusive_scan(unsigned int* const d_pdf, const size_t numBin
   if (threadIdx.x == 0)
     for (int i = (numBins-1); i > 0; i--)
       d_pdf[i] = d_pdf[i-1];
-    d_pdf[0] = 11;
+    d_pdf[0] -= d_pdf[1];
 }
 
 float *d_min_intermediate, *d_max_intermediate, *d_min_final, *d_max_final;

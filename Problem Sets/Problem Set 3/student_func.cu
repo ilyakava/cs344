@@ -190,8 +190,8 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   checkCudaErrors(cudaMemcpy(&max_logLum, d_max_final, sizeof(float), cudaMemcpyDeviceToHost));
 
   // 2) subtract them to find the range
-  // printf("GPU min: %f\n", min_logLum);
-  // printf("GPU max: %f\n", max_logLum);
+  printf("GPU min: %f\n", min_logLum);
+  printf("GPU max: %f\n", max_logLum);
   float range_logLum = max_logLum - min_logLum;
 
   // 3) generate a histogram of all the values in the logLuminance channel using
@@ -206,13 +206,13 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   global_histogram<<<gridSize, blockSize>>>(d_logLuminance, d_cdf, min_logLum, range_logLum, numRows, numCols, numBins);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-  /* debug */
-  // unsigned int bins[numBins];
-  // checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
+  // debug
+  unsigned int bins[numBins];
+  checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
 
-  // printf("PDF:\n");
-  // for (int i = 0; i < numBins; i++)
-  //   printf("%i,", bins[i]);
+  printf("PDF:\n");
+  for (int i = 0; i < numBins; i++)
+    printf("%i,", bins[i]);
 
   // 4) Perform an exclusive scan (prefix sum) on the histogram to get
   //    the cumulative distribution of luminance values (this should go in the
@@ -225,11 +225,10 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // TODO check if hillis steele is exclusive
 
-  /* debug */
-  // checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
 
-  // printf("\nCDF:\n");
-  // for (int i = 0; i < numBins; i++)
-  //   printf("%i,", bins[i]);
+  printf("\nCDF:\n");
+  for (int i = 0; i < numBins; i++)
+    printf("%i,", bins[i]);
 
 }

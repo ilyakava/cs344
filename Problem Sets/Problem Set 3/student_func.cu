@@ -227,6 +227,7 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
 
   checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
 
+  // debug
   printf("\nCDF:\n");
   for (int i = 0; i < numBins; i++)
     printf("%i,", bins[i]);

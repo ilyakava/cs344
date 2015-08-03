@@ -151,8 +151,10 @@ void hillis_steele_exclusive_scan(unsigned int* const d_pdf, const size_t numBin
 
   // convert the above inclusive scan to an exclusive one
   if (threadIdx.x == 0)
-    for (int i = (numBins-1); i > 0; i--)
+    for (int i = (numBins-1); i > 0; i--) {
+      printf("%i\n", i);
       d_pdf[i] = d_pdf[i-1];
+    }
     d_pdf[0] = 0;
 }
 

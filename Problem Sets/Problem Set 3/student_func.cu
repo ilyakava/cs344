@@ -143,9 +143,9 @@ void hillis_steele_scan(unsigned int* const d_pdf, const size_t numBins)
   int tid = threadIdx.x;
   // use left shift '<<' to multiply by 2 each iteration
   for (unsigned int s = 1; s < numBins; s <<= 1) {
-    int neighborid = tid - s;
-    if (neighborid > 0)
-      d_pdf[neighborid] += d_pdf[tid];
+    int left_neighborid = tid - s;
+    if (left_neighborid > 0)
+      d_pdf[tid] += d_pdf[left_neighborid];
     __syncthreads();
   }
 }

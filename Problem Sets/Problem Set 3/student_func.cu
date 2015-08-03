@@ -129,7 +129,7 @@ void global_histogram(const float* const d_logLuminance,
   const unsigned int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
 
   float ll = d_logLuminance[thread_1D_pos];
-  int bin = (int)((ll - min_logLum) / range_logLum * numBins);
+  int bin = (int)(((ll - min_logLum) / range_logLum) * numBins);
 
   // assert(min_logLum <= ll);
   // assert((min_logLum + range_logLum) >= ll);

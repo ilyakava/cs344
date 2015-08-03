@@ -201,12 +201,12 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // debug
-  // unsigned int bins[numBins];
-  // checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
+  unsigned int bins[numBins];
+  checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
 
-  // printf("PDF:\n");
-  // for (int i = 0; i < numBins; i++)
-  //   printf("%i", bins[i]);
+  printf("PDF:\n");
+  for (int i = 0; i < numBins; i++)
+    printf("%i,", bins[i]);
 
   // 4) Perform an exclusive scan (prefix sum) on the histogram to get
   //    the cumulative distribution of luminance values (this should go in the

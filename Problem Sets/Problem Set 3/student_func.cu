@@ -138,7 +138,7 @@ void global_histogram(const float* const d_logLuminance,
 }
 
 __global__
-void hillis_steele_scan(unsigned int* const d_pdf, const size_t numBins)
+void hillis_steele_exclusive_scan(unsigned int* const d_pdf, const size_t numBins)
 {
   int tid = threadIdx.x;
   // use left shift '<<' to multiply by 2 each iteration
@@ -148,6 +148,12 @@ void hillis_steele_scan(unsigned int* const d_pdf, const size_t numBins)
       d_pdf[tid] += d_pdf[left_neighborid];
     __syncthreads();
   }
+
+  // convert the above inclusive scan to an exclusive one
+  if (threadIdx.x == 0)
+    for (unsigned int i = (numBins-1); i > 0; i--)
+      d_pdf[i] = d_pdf[i-1];
+    d_pdf[0] = 0;
 }
 
 float *d_min_intermediate, *d_max_intermediate, *d_min_final, *d_max_final;
@@ -215,7 +221,7 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // we have 1024 bins, and we have 2880 Thread processors on a K40c, and
   // 512 on a M2090, so we have plenty of workers, want step efficiency over
   // work efficiency, will use Hillis & Steele
-  hillis_steele_scan<<<1, numBins>>>(d_cdf, numBins);
+  hillis_steele_exclusive_scan<<<1, numBins>>>(d_cdf, numBins);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // TODO check if hillis steele is exclusive
 

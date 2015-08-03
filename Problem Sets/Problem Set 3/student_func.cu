@@ -145,7 +145,7 @@ void hillis_steele_exclusive_scan(unsigned int* const d_pdf, const size_t numBin
   for (unsigned int s = 1; s < numBins; s <<= 1) {
     int left_neighborid = tid - s;
     if (left_neighborid >= 0)
-      d_pdf[tid] += d_pdf[left_neighborid];
+      d_pdf[tid] = d_pdf[tid] + d_pdf[left_neighborid];
     __syncthreads();
   }
 
@@ -153,7 +153,7 @@ void hillis_steele_exclusive_scan(unsigned int* const d_pdf, const size_t numBin
   if (threadIdx.x == 0)
     for (int i = (numBins-1); i > 0; i--)
       d_pdf[i] = d_pdf[i-1];
-    d_pdf[0] -= d_pdf[1];
+    d_pdf[0] = 0;
 }
 
 float *d_min_intermediate, *d_max_intermediate, *d_min_final, *d_max_final;

@@ -173,14 +173,6 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   //    store in min_logLum and max_logLum
 
   // two kernels, reduction to find min and max
-  // min
-  checkCudaErrors(cudaMalloc(&d_min_intermediate, sizeof(float) * NUM_THREADS));
-  shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_intermediate, numRows, numCols, 0);
-  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  checkCudaErrors(cudaMalloc(&d_min_final, sizeof(float)));
-  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_min_intermediate, d_min_final, numRows, numCols, 0);
-  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  checkCudaErrors(cudaMemcpy(&min_logLum, d_min_final, sizeof(float), cudaMemcpyDeviceToHost));
   // max
   checkCudaErrors(cudaMalloc(&d_max_intermediate, sizeof(float) * NUM_THREADS));
   shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_max_intermediate, numRows, numCols, 1);
@@ -189,6 +181,14 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_max_intermediate, d_max_final, numRows, numCols, 1);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaMemcpy(&max_logLum, d_max_final, sizeof(float), cudaMemcpyDeviceToHost));
+  // min
+  checkCudaErrors(cudaMalloc(&d_min_intermediate, sizeof(float) * NUM_THREADS));
+  shmem_min_max_reduce<<<blocks, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_logLuminance, d_min_intermediate, numRows, numCols, 0);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  checkCudaErrors(cudaMalloc(&d_min_final, sizeof(float)));
+  shmem_min_max_reduce<<<1, NUM_THREADS, NUM_THREADS * sizeof(float)>>>(d_min_intermediate, d_min_final, numRows, numCols, 0);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  checkCudaErrors(cudaMemcpy(&min_logLum, d_min_final, sizeof(float), cudaMemcpyDeviceToHost));
 
   // 2) subtract them to find the range
   printf("GPU min: %f\n", min_logLum);
@@ -230,4 +230,8 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // for (int i = 0; i < numBins; i++)
   //   printf("%i,", bins[i]);
 
+  checkCudaErrors(cudaFree(d_max_intermediate));
+  checkCudaErrors(cudaFree(d_min_intermediate));
+  checkCudaErrors(cudaFree(d_max_final));
+  checkCudaErrors(cudaFree(d_min_final));
 }

@@ -85,7 +85,7 @@
 #define NUM_THREADS 1024
 
 __global__
-void shmem_min_max_reduce(const float * d_in, float * d_out, const size_t numRows, const size_t numCols, const int maxMode)
+void shmem_min_max_reduce(const float * const d_in, float * d_out, const size_t numRows, const size_t numCols, const int maxMode)
 {
   extern __shared__ float s_in[];
 
@@ -109,8 +109,9 @@ void shmem_min_max_reduce(const float * d_in, float * d_out, const size_t numRow
     __syncthreads();
   }
 
-  if (tid == 0)
-    d_out[blockIdx.x] = s_in[0];
+  if (tid == 0) {
+    *(d_out + blockIdx.x) = s_in[0];
+  }
 }
 
 __global__
@@ -166,7 +167,7 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
                                   const size_t numCols,
                                   const size_t numBins)
 {
-  int blocks = 1 + (numRows*numCols) / NUM_THREADS;
+  int blocks = 1 + ((numRows*numCols) / NUM_THREADS);
 
   // 1) find the minimum and maximum value in the input logLuminance channel
   //    store in min_logLum and max_logLum
@@ -207,12 +208,11 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // debug
-  unsigned int bins[numBins];
-  checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
-
-  printf("PDF:\n");
-  for (int i = 0; i < numBins; i++)
-    printf("%i,", bins[i]);
+  // unsigned int bins[numBins];
+  // checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
+  // printf("PDF:\n");
+  // for (int i = 0; i < numBins; i++)
+  //   printf("%i,", bins[i]);
 
   // 4) Perform an exclusive scan (prefix sum) on the histogram to get
   //    the cumulative distribution of luminance values (this should go in the
@@ -223,13 +223,11 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
   // work efficiency, will use Hillis & Steele
   hillis_steele_exclusive_scan<<<1, numBins>>>(d_cdf, numBins);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  // TODO check if hillis steele is exclusive
-
-  checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
 
   // debug
-  printf("\nCDF:\n");
-  for (int i = 0; i < numBins; i++)
-    printf("%i,", bins[i]);
+  // checkCudaErrors(cudaMemcpy(bins, d_cdf, sizeof(unsigned int)*numBins, cudaMemcpyDeviceToHost));
+  // printf("\nCDF:\n");
+  // for (int i = 0; i < numBins; i++)
+  //   printf("%i,", bins[i]);
 
 }

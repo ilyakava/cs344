@@ -136,7 +136,7 @@ void your_sort(unsigned int* const d_inputVals,
   unsigned int h_predicateTrue[numElems];
   unsigned int h_predicateTrueScan[numElems];
   unsigned int nsb;
-  unsigned int* = h_numPredicateTrueElements
+  unsigned int* h_numPredicateTrueElements;
 
   checkCudaErrors(cudaMalloc((void**)&d_predicate, size));
   checkCudaErrors(cudaMalloc((void**)&d_predicateTrueScan, size));

@@ -138,11 +138,15 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_predicateFalseScan, size));
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateTrueElements, sizeof(unsigned int)));
 
-  unsigned int max_bits = 64;
+  unsigned int max_bits = 32;
   for (unsigned int bit = 0; bit < max_bits; bit++) {
     nsb = 1<<bit;
     // create predicateTrue
-    check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, numElems);
+    if ((bit + 1) % 2 == 1) {
+      check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, numElems);
+    } else {
+      check_bit<<<gridSize, blockSize>>>(d_outputVals, d_predicate, nsb, numElems);
+    }
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateTrue
     checkCudaErrors(cudaMemcpy(d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));

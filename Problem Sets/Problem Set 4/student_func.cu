@@ -128,7 +128,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   size_t size = sizeof(unsigned int) * numElems;
   int blockSize = 1024;
-  int gridSize = 1 + blockSize / numElems;
+  int gridSize = 1 + (numElems / blockSize);
 
   unsigned int h_predicateTrue[numElems];
   unsigned int h_predicateTrueScan[numElems];

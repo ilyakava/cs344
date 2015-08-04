@@ -113,7 +113,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 // }
 
 __global__
-void scatter(unsigned int* const d_numPredicateTrueElements)
+void scatter(unsigned int const d_numPredicateTrueElements)
 {
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   // if (id >= numElems)

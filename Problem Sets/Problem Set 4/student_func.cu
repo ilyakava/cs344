@@ -134,7 +134,8 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_predicateFalseScan, size));
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateTrueElements, sizeof(unsigned int)));
 
-  for (unsigned int bit = 0; bit <= 32; bit++) {
+  int max_bits = 1;
+  for (unsigned int bit = 0; bit <= max_bits; bit++) {
     nsb = 1<<bit;
     // create predicateTrue
     check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, numElems);

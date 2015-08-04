@@ -79,7 +79,7 @@ Scan is efficient on GPUs thanks to Blelloch, and so its the core of a number of
 - odd even sort is even more efficient than bitonic sorting
 
 
-## GPU performance leader radix sort [pronounced: raid-ichs]
+## GPU performance leader: radix sort [pronounced: raid-ichs]
 
 - algorithm:
     - start with least significant bit (LSB)

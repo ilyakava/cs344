@@ -58,7 +58,7 @@ Shared memory can save us global memory bandwidth (calculate by summing all read
     - serial
         - work: n
         - steps: n
-    - parallel
+    - [parallel](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html)
         - lets pretend we'll do n reductions:
             - steps: same as reduction for largest input n: logn
             - work: n^2

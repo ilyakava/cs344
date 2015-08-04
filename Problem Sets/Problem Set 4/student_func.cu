@@ -115,7 +115,6 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
 unsigned int* d_predicate;
 unsigned int* d_predicateTrueScan;
 unsigned int* d_predicateFalseScan;
-unsigned int* d_numPredicateTrueElements;
 
 void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_inputPos,
@@ -129,7 +128,9 @@ void your_sort(unsigned int* const d_inputVals,
   int blockSize = 1024;
   int gridSize = 1 + blockSize / numElems;
 
-  unsigned int lastPredicateTrueEntry, h_numPredicateTrueElements, nsb;
+  unsigned int h_predicateTrue[numElems];
+  unsigned int h_predicateTrueScan[numElems];
+  unsigned int h_numPredicateTrueElements, nsb;
 
   checkCudaErrors(cudaMalloc((void**)&d_predicate, size));
   checkCudaErrors(cudaMalloc((void**)&d_predicateTrueScan, size));
@@ -148,11 +149,11 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
     // i.e. for how many the predicate is TRUE
-    checkCudaErrors(cudaMemcpy(&lastPredicateTrueEntry, (d_predicate + numElems - 1),
+    checkCudaErrors(cudaMemcpy(&h_predicateTrue, d_predicate,
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, *(&d_predicateTrueScan + numElems - 1),
+    checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    h_numPredicateTrueElements += lastPredicateTrueEntry;
+    h_numPredicateTrueElements = h_predicateTrueScan[numElems-1] + h_predicateTrue[numElems-1];
     printf("h_numPredicateTrueElements: %i\n", h_numPredicateTrueElements);
     checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, &h_numPredicateTrueElements,
                                sizeof(unsigned int), cudaMemcpyHostToDevice));

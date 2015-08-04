@@ -150,7 +150,7 @@ void your_sort(unsigned int* const d_inputVals,
     // i.e. for how many the predicate is TRUE
     checkCudaErrors(cudaMemcpy(&lastPredicateTrueEntry, (d_predicate + numElems - 1),
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, (&d_predicateTrueScan + numElems - 1),
+    checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, *(&d_predicateTrueScan + numElems - 1),
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
     h_numPredicateTrueElements += lastPredicateTrueEntry;
     printf("h_numPredicateTrueElements: %i\n", h_numPredicateTrueElements);

@@ -112,7 +112,7 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
   d_output[newLoc] = d_input[id];
 }
 
-unsigned int* const d_predicate, d_predicateTrueScan, d_predicateFalseScan, ping, pong;
+unsigned int* const d_predicate, d_predicateTrueScan, d_predicateFalseScan;
 
 void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_inputPos,
@@ -155,13 +155,11 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {
-      ping = &d_inputVals;
-      pong = &d_outputVals;
+      scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
+                                       d_predicate, numPredicateTrueElements, numElems);
     } else {
-      ping = &d_outputVals;
-      pong = &d_inputVals;
+      scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
+                                       d_predicate, numPredicateTrueElements, numElems);
     }
-    scatter<<<gridSize, blockSize>>>(ping, pong, d_predicateTrueScan, d_predicateFalseScan,
-                                     d_predicate, numPredicateTrueElements, numElems);
   }
 }

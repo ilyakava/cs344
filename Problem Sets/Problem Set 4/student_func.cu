@@ -94,40 +94,28 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
   }
 }
 
-// __global__
-// void scatter(unsigned int* const d_input, unsigned int* const d_output,
-//              unsigned int* const d_predicateTrueScan, unsigned int* const d_predicateFalseScan,
-//              unsigned int* const d_predicateFalse, unsigned int* const d_numPredicateTrueElements,
-//              const size_t numElems)
-// {
-//   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
-//   if (id >= numElems)
-//     return;
-
-//   unsigned int newLoc;
-//   if (d_predicateFalse == (unsigned int)1)
-//     newLoc = d_predicateFalseScan[id] + numPredicateTrueElements;
-//   else
-//     newLoc = d_predicateTrueScan[id];
-//   d_output[newLoc] = d_input[id];
-// }
-
 __global__
-void scatter(unsigned int const d_numPredicateTrueElements)
+void scatter(unsigned int* const d_input, unsigned int* const d_output,
+             unsigned int* const d_predicateTrueScan, unsigned int* const d_predicateFalseScan,
+             unsigned int* const d_predicateFalse, unsigned int* const d_numPredicateTrueElements,
+             const size_t numElems)
 {
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
-  // if (id >= numElems)
-  //   return;
+  if (id >= numElems)
+    return;
 
-  // unsigned int newLoc;
-  // if (d_predicateFalse == (unsigned int)1)
-  //   newLoc = d_predicateFalseScan[id] + numPredicateTrueElements;
-  // else
-  //   newLoc = d_predicateTrueScan[id];
-  // d_output[newLoc] = d_input[id];
+  unsigned int newLoc;
+  if (d_predicateFalse == (unsigned int)1)
+    newLoc = d_predicateFalseScan[id] + numPredicateTrueElements;
+  else
+    newLoc = d_predicateTrueScan[id];
+  d_output[newLoc] = d_input[id];
 }
 
-unsigned int* const d_predicate, d_predicateTrueScan, d_predicateFalseScan, d_numPredicateTrueElements;
+unsigned int* const d_predicate;
+unsigned int* const d_predicateTrueScan;
+unsigned int* const d_predicateFalseScan;
+unsigned int* const d_numPredicateTrueElements;
 
 void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_inputPos,
@@ -172,13 +160,12 @@ void your_sort(unsigned int* const d_inputVals,
     exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateFalseScan, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
-    scatter<<<gridSize, blockSize>>>(d_numPredicateTrueElements);
-    // if ((bit + 1) % 2 == 1) {
-    //   scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
-    //                                    d_predicate, &d_numPredicateTrueElements, numElems);
-    // } else {
-    //   scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
-    //                                    d_predicate, &d_numPredicateTrueElements, numElems);
-    // }
+    if ((bit + 1) % 2 == 1) {
+      scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
+                                       d_predicate, d_numPredicateTrueElements, numElems);
+    } else {
+      scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
+                                       d_predicate, d_numPredicateTrueElements, numElems);
+    }
   }
 }

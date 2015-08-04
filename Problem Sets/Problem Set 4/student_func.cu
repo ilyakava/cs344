@@ -135,7 +135,8 @@ void your_sort(unsigned int* const d_inputVals,
 
   unsigned int h_predicateTrue[numElems];
   unsigned int h_predicateTrueScan[numElems];
-  unsigned int h_numPredicateTrueElements, nsb;
+  unsigned int nsb;
+  unsigned int* = h_numPredicateTrueElements
 
   checkCudaErrors(cudaMalloc((void**)&d_predicate, size));
   checkCudaErrors(cudaMalloc((void**)&d_predicateTrueScan, size));
@@ -162,8 +163,8 @@ void your_sort(unsigned int* const d_inputVals,
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    h_numPredicateTrueElements = h_predicateTrueScan[numElems-1] + h_predicateTrue[numElems-1];
-    printf("nsb: %i h_numPredicateTrueElements: %i\n", nsb, h_numPredicateTrueElements);
+    *h_numPredicateTrueElements = h_predicateTrueScan[numElems-1] + h_predicateTrue[numElems-1];
+    printf("nsb: %i h_numPredicateTrueElements: %i\n", nsb, *h_numPredicateTrueElements);
     checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, h_numPredicateTrueElements,
                                sizeof(unsigned int), cudaMemcpyHostToDevice));
     // transform predicateTrue -> predicateFalse

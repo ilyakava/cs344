@@ -105,8 +105,8 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
     return;
 
   unsigned int newLoc;
-  if (d_predicateFalse == (unsigned int)1)
-    newLoc = d_predicateFalseScan[id] + d_numPredicateTrueElements;
+  if (d_predicateFalse[id] == 1)
+    newLoc = d_predicateFalseScan[id] + *d_numPredicateTrueElements;
   else
     newLoc = d_predicateTrueScan[id];
   d_output[newLoc] = d_input[id];

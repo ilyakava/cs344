@@ -124,11 +124,12 @@ void your_sort(unsigned int* const d_inputVals,
   int blockSize = 1024;
   int gridSize = 1 + blockSize / numElems;
 
+  unsigned int lastPredicateTrue, h_numPredicateTrueElements, d_numPredicateTrueElements, nsb;
+
   checkCudaErrors(cudaMalloc(&d_predicate, size));
   checkCudaErrors(cudaMalloc(&d_predicateTrueScan, size));
   checkCudaErrors(cudaMalloc(&d_predicateFalseScan, size));
-
-  unsigned int lastPredicateTrue, numPredicateTrueElements, nsb;
+  checkCudaErrors(cudaMalloc(&d_numPredicateTrueElements, sizeof(unsigned int)));
 
   for (unsigned int bit = 0; bit <= 32; bit++) {
     nsb = 1<<bit;
@@ -143,9 +144,11 @@ void your_sort(unsigned int* const d_inputVals,
     // i.e. for how many the predicate is TRUE
     checkCudaErrors(cudaMemcpy(&lastPredicateTrue, (d_predicate + numElems - 1),
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy(&numPredicateTrueElements, (d_predicateTrueScan + numElems - 1),
+    checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, (d_predicateTrueScan + numElems - 1),
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    numPredicateTrueElements += lastPredicateTrue;
+    h_numPredicateTrueElements += lastPredicateTrue;
+    checkCudaErrors(cudaMemcpy(&d_numPredicateTrueElements, h_numPredicateTrueElements,
+                               sizeof(unsigned int), cudaMemcpyHostToDevice));
     // transform predicateTrue -> predicateFalse
     flip_bit<<<gridSize, blockSize>>>(d_predicate, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
@@ -156,10 +159,10 @@ void your_sort(unsigned int* const d_inputVals,
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {
       scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
-                                       d_predicate, numPredicateTrueElements, numElems);
+                                       d_predicate, d_numPredicateTrueElements, numElems);
     } else {
       scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
-                                       d_predicate, numPredicateTrueElements, numElems);
+                                       d_predicate, d_numPredicateTrueElements, numElems);
     }
   }
 }

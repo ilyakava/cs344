@@ -50,7 +50,7 @@ void check_bit(unsigned int* const d_inputVals, unsigned int* const d_outputPred
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
     return;
-  int predicate = (d_inputVals[id] & bit) == 0;
+  int predicate = ((d_inputVals[id] & bit) == 0);
   d_outputPredicate[id] = predicate;
 }
 
@@ -109,6 +109,7 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
     newLoc = d_predicateFalseScan[id] + *d_numPredicateTrueElements;
   else
     newLoc = d_predicateTrueScan[id];
+  __syncthreads();
   d_output[newLoc] = d_input[id];
 }
 

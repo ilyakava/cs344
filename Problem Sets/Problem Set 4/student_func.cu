@@ -159,7 +159,7 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
     h_numPredicateTrueElements = h_predicateTrueScan[numElems-1] + h_predicateTrue[numElems-1];
-    printf("h_numPredicateTrueElements: %i\n", h_numPredicateTrueElements);
+    printf("nsb: %i h_numPredicateTrueElements: %i\n", nsb, h_numPredicateTrueElements);
     checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, &h_numPredicateTrueElements,
                                sizeof(unsigned int), cudaMemcpyHostToDevice));
     // transform predicateTrue -> predicateFalse

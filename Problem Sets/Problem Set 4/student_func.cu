@@ -123,16 +123,16 @@ void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_outputPos,
                const size_t numElems)
 {
-  std::size_t size = sizeof(unsigned int) * numElems;
+  size_t size = sizeof(unsigned int) * numElems;
   int blockSize = 1024;
   int gridSize = 1 + blockSize / numElems;
 
   unsigned int lastPredicateTrueEntry, h_numPredicateTrueElements, nsb;
 
-  checkCudaErrors(cudaMalloc(&d_predicate, size));
-  checkCudaErrors(cudaMalloc(&d_predicateTrueScan, size));
-  checkCudaErrors(cudaMalloc(&d_predicateFalseScan, size));
-  checkCudaErrors(cudaMalloc(&d_numPredicateTrueElements, sizeof(unsigned int)*1));
+  checkCudaErrors(cudaMalloc((void**)&d_predicate, size));
+  checkCudaErrors(cudaMalloc((void**)&d_predicateTrueScan, size));
+  checkCudaErrors(cudaMalloc((void**)&d_predicateFalseScan, size));
+  checkCudaErrors(cudaMalloc((void**)&d_numPredicateTrueElements, sizeof(unsigned int)));
 
   for (unsigned int bit = 0; bit <= 32; bit++) {
     nsb = 1<<bit;

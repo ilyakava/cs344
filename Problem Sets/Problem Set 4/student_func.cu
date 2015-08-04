@@ -115,6 +115,7 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
 unsigned int* d_predicate;
 unsigned int* d_predicateTrueScan;
 unsigned int* d_predicateFalseScan;
+unsigned int* d_numPredicateTrueElements;
 
 void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_inputPos,

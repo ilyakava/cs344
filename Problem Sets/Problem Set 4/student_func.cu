@@ -172,4 +172,8 @@ void your_sort(unsigned int* const d_inputVals,
                                        d_predicate, d_numPredicateTrueElements, numElems);
     }
   }
+  checkCudaErrors(cudaFree(d_predicate));
+  checkCudaErrors(cudaFree(d_predicateTrueScan));
+  checkCudaErrors(cudaFree(d_predicateFalseScan));
+  checkCudaErrors(cudaFree(d_numPredicateTrueElements));
 }

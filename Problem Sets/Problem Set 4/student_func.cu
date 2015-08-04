@@ -106,16 +106,16 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
 
   unsigned int newLoc;
   if (d_predicateFalse == (unsigned int)1)
-    newLoc = d_predicateFalseScan[id] + numPredicateTrueElements;
+    newLoc = d_predicateFalseScan[id] + d_numPredicateTrueElements;
   else
     newLoc = d_predicateTrueScan[id];
   d_output[newLoc] = d_input[id];
 }
 
-unsigned int* const d_predicate;
-unsigned int* const d_predicateTrueScan;
-unsigned int* const d_predicateFalseScan;
-unsigned int* const d_numPredicateTrueElements;
+unsigned int* d_predicate;
+unsigned int* d_predicateTrueScan;
+unsigned int* d_predicateFalseScan;
+unsigned int* d_numPredicateTrueElements;
 
 void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_inputPos,

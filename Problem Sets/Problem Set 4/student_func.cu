@@ -97,7 +97,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 __global__
 void scatter(unsigned int* const d_input, unsigned int* const d_output,
              unsigned int* const d_predicateTrueScan, unsigned int* const d_predicateFalseScan,
-             unsigned int* const d_predicateFalse, unsigned int* d_numPredicateTrueElements,
+             unsigned int* const d_predicateFalse, unsigned int* const d_numPredicateTrueElements,
              const size_t numElems)
 {
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;

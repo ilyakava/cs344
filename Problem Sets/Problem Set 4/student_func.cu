@@ -141,38 +141,41 @@ void your_sort(unsigned int* const d_inputVals,
     check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateTrue
-    // checkCudaErrors(cudaMemcpy(d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));
-    // exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateTrueScan, numElems);
-    // cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    // // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
-    // // i.e. for how many the predicate is TRUE
-    // checkCudaErrors(cudaMemcpy(&lastPredicateTrueEntry, (d_predicate + numElems - 1),
-    //                            sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    // checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, (d_predicateTrueScan + numElems - 1),
-    //                            sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    // h_numPredicateTrueElements += lastPredicateTrueEntry;
-    // checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, &h_numPredicateTrueElements,
-    //                            sizeof(unsigned int), cudaMemcpyHostToDevice));
-    // // transform predicateTrue -> predicateFalse
-    // flip_bit<<<gridSize, blockSize>>>(d_predicate, numElems);
-    // cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    // // scan predicateFalse
-    // checkCudaErrors(cudaMemcpy(d_predicateFalseScan, d_predicate, size, cudaMemcpyDeviceToDevice));
-    // exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateFalseScan, numElems);
-    // cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    // // scatter values (flip input/output depending on iteration)
-    // if ((bit + 1) % 2 == 1) {
-    //   scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
-    //                                    d_predicate, d_numPredicateTrueElements, numElems);
-    //   scatter<<<gridSize, blockSize>>>(d_inputPos, d_outputPos, d_predicateTrueScan, d_predicateFalseScan,
-    //                                    d_predicate, d_numPredicateTrueElements, numElems);
-    // } else {
-    //   scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
-    //                                    d_predicate, d_numPredicateTrueElements, numElems);
-    //   scatter<<<gridSize, blockSize>>>(d_outputPos, d_inputPos, d_predicateTrueScan, d_predicateFalseScan,
-    //                                    d_predicate, d_numPredicateTrueElements, numElems);
-    // }
-  }
+    checkCudaErrors(cudaMemcpy(d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));
+    exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateTrueScan, numElems);
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
+    // i.e. for how many the predicate is TRUE
+    checkCudaErrors(cudaMemcpy(&lastPredicateTrueEntry, (d_predicate + numElems - 1),
+                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, (d_predicateTrueScan + numElems - 1),
+                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    h_numPredicateTrueElements += lastPredicateTrueEntry;
+    checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, &h_numPredicateTrueElements,
+                               sizeof(unsigned int), cudaMemcpyHostToDevice));
+    // transform predicateTrue -> predicateFalse
+    flip_bit<<<gridSize, blockSize>>>(d_predicate, numElems);
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    // scan predicateFalse
+    checkCudaErrors(cudaMemcpy(d_predicateFalseScan, d_predicate, size, cudaMemcpyDeviceToDevice));
+    exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateFalseScan, numElems);
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    // scatter values (flip input/output depending on iteration)
+  //   if ((bit + 1) % 2 == 1) {
+  //     scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
+  //                                      d_predicate, d_numPredicateTrueElements, numElems);
+  //     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  //     scatter<<<gridSize, blockSize>>>(d_inputPos, d_outputPos, d_predicateTrueScan, d_predicateFalseScan,
+  //                                      d_predicate, d_numPredicateTrueElements, numElems);
+  //   } else {
+  //     scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
+  //                                      d_predicate, d_numPredicateTrueElements, numElems);
+  //     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  //     scatter<<<gridSize, blockSize>>>(d_outputPos, d_inputPos, d_predicateTrueScan, d_predicateFalseScan,
+  //                                      d_predicate, d_numPredicateTrueElements, numElems);
+  //   }
+  //   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  // }
   checkCudaErrors(cudaFree(d_predicate));
   checkCudaErrors(cudaFree(d_predicateTrueScan));
   checkCudaErrors(cudaFree(d_predicateFalseScan));

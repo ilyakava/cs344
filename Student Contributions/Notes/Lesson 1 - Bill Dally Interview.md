@@ -13,7 +13,7 @@ Misnomer story of being able to go to the store and buy a CPU that is faster b/c
 
 Really its about the number of devices you can get on a chip, which is still alive and well (video is from 2015).
 
-Around 2005, denard scaling stopped, sclaing voltages as you scale dimensions that you make transistors at. Stopped b/c of leakage current. New generation of chip, get more transistors, energy goes down, 3x perf/watt improvement. Now we are getting a little energy gain since we hold voltage constant.
+Around 2005, denard scaling stopped, scaling voltages as you scale dimensions that you make transistors at. Stopped b/c of leakage current. New generation of chip, get more transistors, energy goes down, 3x perf/watt improvement. Now we are getting a little energy gain since we hold voltage constant.
 
 With CPUs today: frequency has flattened out, but you get parallelism.
 
@@ -25,4 +25,4 @@ RTL simulations
 
 ## Advice
 
-Memory is not flat, understand the memory heirarchy
+Memory is not flat, understand the memory hierarchy

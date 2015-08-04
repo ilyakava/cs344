@@ -26,15 +26,15 @@ We'll require 2 things of our reducing function:
 - Parallel: O(logn) step complexity (same work complexity)
     - this means that N=1024 will have 10 steps on a GPU, and be 2 orders of magnitude faster if the GPU can do all the work in a single step in parallel
 
-If you are limited in number of processors: Brent's theorum
+If you are limited in number of processors: Brent's theorem
 - A WT algorithm with step complexity S(n) and work complexity W(n) can be simulated on a p-processor PRAM in no more than ⌊ W(n)/p ⌋ + S(n) parallel steps.
 - ([pg 5](http://cgvr.cs.uni-bremen.de/teaching/mpar_literatur/PRAM%20Algorithms%20-%20Chatterjee,%202009.pdf))
 
-Shared data alocation: `extern __shared__ float sdata[];` and then passed as 3rd arg to launched kernel.
+Shared data allocation: `extern __shared__ float sdata[];` and then passed as 3rd arg to launched kernel.
 
 Shared memory can save us global memory bandwidth (calculate by summing all reads and writes together of global version, and dividing by the same for shared version). If this is 3x though, the only way you get 3x speed improvement is by "saturating the memory  system."
 - Multiple items per thread
-- warps are synchrous
+- warps are synchronous
 
 ## Scan
 
@@ -94,7 +94,7 @@ Shared memory can save us global memory bandwidth (calculate by summing all read
 
 ## Tone Mapping (HW)
 
-- process of mapping image of wide range of brightness values to narow range
+- process of mapping image of wide range of brightness values to narrow range
 - Histogram equalization
     - map
     - reduce

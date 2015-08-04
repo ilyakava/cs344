@@ -53,7 +53,7 @@ every thread from any block - global memory
 
 Barrier - all threads stop here (`__syncthreads()`), happens between kernels
 
-CUDA = hierarchy of computation, memory spaces, sychronization
+CUDA = hierarchy of computation, memory spaces, synchronization
 
 # Writing Efficient Programs
 

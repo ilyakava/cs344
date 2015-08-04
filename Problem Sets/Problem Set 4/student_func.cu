@@ -71,7 +71,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
     return;
   // reduce
   unsigned int i;
-  for (i = 2; i <= numElemsl/2; i <<= 1) {
+  for (i = 2; i <= numElems/2; i <<= 1) {
     if ((id + 1) % i == 0) {
       unsigned int neighbor_offset = i>>1;
       d_list[id] += d_list[id - neighbor_offset];
@@ -83,7 +83,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
   if (id == (numElems-1))
     d_list[id] = 0;
   // downsweep
-  for (i; i >= 2; i >>= 1) {
+  for (i = i; i >= 2; i >>= 1) {
     if((id + 1) % i == 0) {
       unsigned int neighbor_offset = i>>1;
       unsigned int old_neighbor = d_list[id - neighbor_offset];
@@ -95,9 +95,9 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 }
 
 __global__
-void scatter(const unsigned int* const d_input, unsigned int* const d_output,
-             const unsigned int* const d_predicateTrueScan, const unsigned int* const d_predicateFalseScan,
-             const unsigned int* const d_predicateFalse, const unsigned int numPredicateTrueElements,
+void scatter(unsigned int* const d_input, unsigned int* const d_output,
+             unsigned int* const d_predicateTrueScan, unsigned int* const d_predicateFalseScan,
+             unsigned int* const d_predicateFalse, unsigned int numPredicateTrueElements,
              const size_t numElems)
 {
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -105,7 +105,7 @@ void scatter(const unsigned int* const d_input, unsigned int* const d_output,
     return;
 
   unsigned int newLoc;
-  if (d_predicateFalse == 1)
+  if (d_predicateFalse == (unsigned int)1)
     newLoc = d_predicateFalseScan[id] + numPredicateTrueElements;
   else
     newLoc = d_predicateTrueScan[id];
@@ -120,7 +120,7 @@ void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_outputPos,
                const size_t numElems)
 {
-  int size = sizeof(unsigned int) * numElems;
+  size_t size = sizeof(unsigned int) * numElems;
   int blockSize = 1024;
   int gridSize = 1 + blockSize / numElems;
 
@@ -133,7 +133,7 @@ void your_sort(unsigned int* const d_inputVals,
   for (unsigned int bit = 0; bit <= 32; bit++) {
     nsb = 1<<bit;
     // create predicateTrue
-    check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb);
+    check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateTrue
     checkCudaErrors(cudaMemcpy(&d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));
@@ -155,13 +155,13 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {
-      ping = d_inputVals;
-      pong = d_outputVals;
+      ping = &d_inputVals;
+      pong = &d_outputVals;
     } else {
-      ping = d_outputVals;
-      pong = d_inputVals;
+      ping = &d_outputVals;
+      pong = &d_inputVals;
     }
     scatter<<<gridSize, blockSize>>>(ping, pong, d_predicateTrueScan, d_predicateFalseScan,
-                                     d_predicateFalse, numPredicateTrueElements, numElems)
+                                     d_predicate, numPredicateTrueElements, numElems);
   }
 }

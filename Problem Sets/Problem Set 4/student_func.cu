@@ -109,6 +109,7 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
     newLoc = d_predicateFalseScan[id] + *d_numPredicateTrueElements;
   else
     newLoc = d_predicateTrueScan[id];
+  assert(newLoc < numElems);
   d_output[newLoc] = d_input[id];
 }
 

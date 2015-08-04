@@ -161,21 +161,21 @@ void your_sort(unsigned int* const d_inputVals,
     exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateFalseScan, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
-  //   if ((bit + 1) % 2 == 1) {
-  //     scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
-  //                                      d_predicate, d_numPredicateTrueElements, numElems);
-  //     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  //     scatter<<<gridSize, blockSize>>>(d_inputPos, d_outputPos, d_predicateTrueScan, d_predicateFalseScan,
-  //                                      d_predicate, d_numPredicateTrueElements, numElems);
-  //   } else {
-  //     scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
-  //                                      d_predicate, d_numPredicateTrueElements, numElems);
-  //     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  //     scatter<<<gridSize, blockSize>>>(d_outputPos, d_inputPos, d_predicateTrueScan, d_predicateFalseScan,
-  //                                      d_predicate, d_numPredicateTrueElements, numElems);
-  //   }
-  //   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  // }
+    // if ((bit + 1) % 2 == 1) {
+    //   scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,
+    //                                    d_predicate, d_numPredicateTrueElements, numElems);
+    //   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    //   scatter<<<gridSize, blockSize>>>(d_inputPos, d_outputPos, d_predicateTrueScan, d_predicateFalseScan,
+    //                                    d_predicate, d_numPredicateTrueElements, numElems);
+    // } else {
+    //   scatter<<<gridSize, blockSize>>>(d_outputVals, d_inputVals, d_predicateTrueScan, d_predicateFalseScan,
+    //                                    d_predicate, d_numPredicateTrueElements, numElems);
+    //   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+    //   scatter<<<gridSize, blockSize>>>(d_outputPos, d_inputPos, d_predicateTrueScan, d_predicateFalseScan,
+    //                                    d_predicate, d_numPredicateTrueElements, numElems);
+    // }
+    // cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  }
   checkCudaErrors(cudaFree(d_predicate));
   checkCudaErrors(cudaFree(d_predicateTrueScan));
   checkCudaErrors(cudaFree(d_predicateFalseScan));

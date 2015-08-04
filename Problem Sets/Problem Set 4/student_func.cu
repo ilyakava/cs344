@@ -124,6 +124,8 @@ void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_outputPos,
                const size_t numElems)
 {
+  printf("numElems: %i\n", numElems);
+
   size_t size = sizeof(unsigned int) * numElems;
   int blockSize = 1024;
   int gridSize = 1 + blockSize / numElems;
@@ -136,7 +138,7 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateTrueElements, sizeof(unsigned int)));
 
   int max_bits = 1;
-  for (unsigned int bit = 0; bit <= max_bits; bit++) {
+  for (unsigned int bit = 0; bit < max_bits; bit++) {
     nsb = 1<<bit;
     // create predicateTrue
     check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, numElems);
@@ -152,6 +154,7 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, (d_predicateTrueScan + numElems - 1),
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
     h_numPredicateTrueElements += lastPredicateTrueEntry;
+    printf("h_numPredicateTrueElements: %i\n", h_numPredicateTrueElements);
     checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, &h_numPredicateTrueElements,
                                sizeof(unsigned int), cudaMemcpyHostToDevice));
     // transform predicateTrue -> predicateFalse

@@ -50,6 +50,7 @@ void check_bit(unsigned int* const d_inputVals, unsigned int* const d_outputPred
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
     return;
+
   int predicate = ((d_inputVals[id] & bit) == 0);
   d_outputPredicate[id] = predicate;
 }
@@ -60,6 +61,7 @@ void flip_bit(unsigned int* const d_list, const size_t numElems)
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
     return;
+
   d_list[id] = ((d_list[id] + 1) % 2);
 }
 
@@ -69,6 +71,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
     return;
+
   // reduce
   unsigned int i;
   for (i = 2; i <= numElems/2; i <<= 1) {
@@ -161,7 +164,7 @@ void your_sort(unsigned int* const d_inputVals,
                                sizeof(unsigned int), cudaMemcpyDeviceToHost));
     h_numPredicateTrueElements = h_predicateTrueScan[numElems-1] + h_predicateTrue[numElems-1];
     printf("nsb: %i h_numPredicateTrueElements: %i\n", nsb, h_numPredicateTrueElements);
-    checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, &h_numPredicateTrueElements,
+    checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, h_numPredicateTrueElements,
                                sizeof(unsigned int), cudaMemcpyHostToDevice));
     // transform predicateTrue -> predicateFalse
     flip_bit<<<gridSize, blockSize>>>(d_predicate, numElems);

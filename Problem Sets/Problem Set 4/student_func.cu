@@ -69,7 +69,7 @@ __global__
 void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 {
   // at the lowest level, we are still working with every other element (hence the 2 *)
-  const unsigned int id = 2 * blockDim.x * blockIdx.x + threadIdx.x;
+  const unsigned int id = 2 * (blockDim.x * blockIdx.x + threadIdx.x);
   if (id >= numElems)
     return;
 
@@ -152,7 +152,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 1<<10;
+  size_t myNumElems = 1<<14;
   printf("myNumElems: %i\n", myNumElems);
 
 

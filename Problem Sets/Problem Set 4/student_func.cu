@@ -52,7 +52,6 @@ void check_bit(unsigned int* const d_inputVals, unsigned int* const d_outputPred
     return;
 
   int predicate = ((d_inputVals[id] & bit) == 0);
-  printf("predicate: %i\n", predicate);
   d_outputPredicate[id] = predicate;
 }
 

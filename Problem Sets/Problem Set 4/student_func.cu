@@ -218,7 +218,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateTrue
     checkCudaErrors(cudaMemcpy(d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));
-    checkCudaErrors(cudaMemset((void**)&d_block_sums, 0, gridSize*sizeof(unsigned int)));
+    checkCudaErrors(cudaMemset(d_block_sums, 0, gridSize*sizeof(unsigned int)));
     partial_exclusive_blelloch_scan<<<gridSize, blockSize, sizeof(unsigned int)*blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
@@ -251,7 +251,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateFalse
     checkCudaErrors(cudaMemcpy(d_predicateFalseScan, d_predicate, size, cudaMemcpyDeviceToDevice));
-    checkCudaErrors(cudaMemset((void**)&d_block_sums, 0, gridSize*sizeof(unsigned int)));
+    checkCudaErrors(cudaMemset(d_block_sums, 0, gridSize*sizeof(unsigned int)));
     partial_exclusive_blelloch_scan<<<gridSize, blockSize, sizeof(unsigned int)*blockSize>>>(d_predicateFalseScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateFalseElements, gridSize);

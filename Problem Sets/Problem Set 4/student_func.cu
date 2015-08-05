@@ -179,7 +179,6 @@ void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_outputPos,
                const size_t numElems)
 {
-  size_t numElems = numElems;
   int blockSize = BLOCK_SIZE;
 
   size_t size = sizeof(unsigned int) * numElems;

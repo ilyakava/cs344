@@ -153,6 +153,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   // DEBUG
   size_t myNumElems = 1<<14;
+  printf("myNumElems: %i\n", myNumElems);
 
 
   size_t size = sizeof(unsigned int) * myNumElems;

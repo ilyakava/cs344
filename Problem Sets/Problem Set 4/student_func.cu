@@ -180,8 +180,8 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = numElems;
-  int blockSize = 32;
+  size_t myNumElems = 513;
+  int blockSize = 16;
   // printf("myNumElems: %i\n", myNumElems);
 
 
@@ -194,7 +194,7 @@ void your_sort(unsigned int* const d_inputVals,
   unsigned int h_predicate[myNumElems];
   unsigned int h_predicateScan[myNumElems];
   unsigned int h_block_sums[gridSize];
-  int nsb;
+  unsigned int nsb;
   // unsigned int* h_numPredicateElements = (unsigned int *)malloc(sizeof(unsigned int));
   unsigned int h_numPredicateElements[1];
 

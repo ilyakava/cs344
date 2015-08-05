@@ -195,7 +195,9 @@ void your_sort(unsigned int* const d_inputVals,
 
 
     // DEBUG
-    printf("h_numPredicateTrueElements: %i h_predicateTrueScan:\n", h_numPredicateTrueElements);
+    printf("h_predicateTrue:\n");
+    print_array(h_predicateTrue, myNumElems);
+    printf("h_numPredicateTrueElements: %i h_predicateTrueScan:\n", *h_numPredicateTrueElements);
     print_array(h_predicateTrueScan, myNumElems);
 
 

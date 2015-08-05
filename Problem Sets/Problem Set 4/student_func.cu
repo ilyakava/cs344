@@ -180,7 +180,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 32;
+  size_t myNumElems = 33;
   int blockSize = 4;
   // printf("myNumElems: %i\n", myNumElems);
 
@@ -205,7 +205,7 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateFalseElements, sizeof(unsigned int))); // throwaway
   checkCudaErrors(cudaMalloc((void**)&d_block_sums, gridSize*sizeof(unsigned int)));
 
-  unsigned int max_bits = 33;
+  unsigned int max_bits = 32;
   for (unsigned int bit = 0; bit < max_bits; bit++) {
 
 

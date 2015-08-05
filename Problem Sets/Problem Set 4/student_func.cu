@@ -191,8 +191,14 @@ void your_sort(unsigned int* const d_inputVals,
 
   unsigned int h_array[myNumElems];
   checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, sizeof(unsigned int) * (myNumElems+1), cudaMemcpyDeviceToHost));
-  // h_array[948] = 4;
-  // h_array[947] = 4;
+  h_array[0] = 2;
+  h_array[1] = 2;
+  h_array[2] = 2;
+  h_array[3] = 3;
+  h_array[4] = 3;
+  h_array[5] = 3;
+  h_array[6] = 2;
+  h_array[7] = 3;
   checkCudaErrors(cudaMemcpy(d_inputVals, h_array, size, cudaMemcpyHostToDevice));
   // printf("array[947] = %i\n", h_array[947]);
   // printf("array[948] = %i\n", h_array[948]);

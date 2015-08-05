@@ -261,7 +261,18 @@ void your_sort(unsigned int* const d_inputVals,
 
 
 
-
+    // DEBUG
+    checkCudaErrors(cudaMemcpy(&h_predicate, d_predicate,
+                               size, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateFalseScan,
+                               size, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(&h_numPredicateElements, d_numPredicateFalseElements,
+                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    printf("h_predicate:\n");
+    print_array(h_predicate, myNumElems);
+    printf("h_predicateScan:\n");
+    print_array(h_predicateScan, myNumElems);
+    printf("h_numPredicateElements: %i\n", *h_numPredicateElements);
 
 
 

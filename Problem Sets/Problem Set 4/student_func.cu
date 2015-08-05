@@ -151,7 +151,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = numElems;
+  size_t myNumElems = 10;
 
 
   size_t size = sizeof(unsigned int) * myNumElems;

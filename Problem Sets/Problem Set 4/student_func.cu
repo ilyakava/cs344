@@ -118,8 +118,12 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
   } else {
     newLoc = d_predicateTrueScan[id];
   }
-  if (newLoc >= numElems)
-    printf("d_predicateFalse[id]: %i newLoc: %i numElems: %i\n", d_predicateFalse[id], newLoc, numElems);
+
+
+  // if (newLoc >= numElems)
+  //   printf("d_predicateFalse[id]: %i newLoc: %i numElems: %i\n", d_predicateFalse[id], newLoc, numElems);
+
+
   d_output[newLoc] = d_input[id];
 }
 
@@ -195,7 +199,7 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
                                size, cudaMemcpyDeviceToHost));
     *h_numPredicateTrueElements = h_predicateTrueScan[myNumElems-1] + h_predicateTrue[myNumElems-1];
-    printf("nsb: %i h_numPredicateTrueElements: %i\n", nsb, *h_numPredicateTrueElements);
+    printf("h_numPredicateTrueElements: %i\n", *h_numPredicateTrueElements);
     checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, h_numPredicateTrueElements,
                                sizeof(unsigned int), cudaMemcpyHostToDevice));
 

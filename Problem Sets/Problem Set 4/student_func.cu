@@ -235,10 +235,11 @@ void your_sort(unsigned int* const d_inputVals,
                                size, cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
                                size, cudaMemcpyDeviceToHost));
-    *h_numPredicateTrueElements = h_predicateTrueScan[myNumElems-1] + h_predicateTrue[myNumElems-1];
+    checkCudaErrors(cudaMemcpy(&h_numPredicateTrueElements, d_numPredicateTrueElements,
+                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    // *h_numPredicateTrueElements = h_predicateTrueScan[myNumElems-1] + h_predicateTrue[myNumElems-1];
     // checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, h_numPredicateTrueElements,
     //                            sizeof(unsigned int), cudaMemcpyHostToDevice));
-
 
     // DEBUG
     printf("h_predicateTrue:\n");
@@ -261,6 +262,13 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateFalseScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+
+
+
+
+
+
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {
       scatter<<<gridSize, blockSize>>>(d_inputVals, d_outputVals, d_predicateTrueScan, d_predicateFalseScan,

@@ -120,13 +120,13 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
 
 __global__
 void increment_blelloch_scan_with_block_sums(unsigned int* const d_predicateScan,
-                                             unsigned int* const d_block_sums, const size_t numElems)
+                                             unsigned int* const d_blockSumScan, const size_t numElems)
 {
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
     return;
 
-  d_predicateScan[id] += d_block_sums[blockIdx.x];
+  d_predicateScan[id] += d_blockSumScan[blockIdx.x];
 }
 
 __global__
@@ -249,6 +249,15 @@ void your_sort(unsigned int* const d_inputVals,
 
     partial_exclusive_blelloch_scan<<<1, BLOCK_SIZE, sizeof(unsigned int)*BLOCK_SIZE>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+
+    checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
+                               sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
+    printf("h_block_sums (after scan):\n");
+    print_array(h_block_sums, gridSize);
+    printf("----------\n");
+
+
     increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
@@ -260,11 +269,10 @@ void your_sort(unsigned int* const d_inputVals,
     // print_array(h_predicate, myNumElems);
     // checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
     //                            size, cudaMemcpyDeviceToHost));
-    printf("h_predicateScan:\n");
+    printf("h_predicateScan (after increment):\n");
+    checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
+                               size, cudaMemcpyDeviceToHost));
     print_array(h_predicateScan, myNumElems);
-    checkCudaErrors(cudaMemcpy(&h_numPredicateElements, d_numPredicateTrueElements,
-                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    printf("h_numPredicateElements: %i\n", *h_numPredicateElements);
 
 
     // transform predicateTrue -> predicateFalse

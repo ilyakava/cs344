@@ -152,7 +152,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 1<<10;
+  size_t myNumElems = 1<<9;
   printf("myNumElems: %i\n", myNumElems);
 
 

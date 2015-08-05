@@ -180,7 +180,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 513;
+  size_t myNumElems = 1025;
   int blockSize = 32;
   // printf("myNumElems: %i\n", myNumElems);
 

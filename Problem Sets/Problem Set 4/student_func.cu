@@ -115,7 +115,8 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
 }
 
 __global__
-void increment_blelloch_scan_with_block_sums(unsigned int* const d_predicateScan, unsigned int* const d_block_sums)
+void increment_blelloch_scan_with_block_sums(unsigned int* const d_predicateScan,
+                                             unsigned int* const d_block_sums, const size_t numElems)
 {
   const unsigned int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
@@ -222,7 +223,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums);
+    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
@@ -255,7 +256,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateFalseElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateFalseScan, d_block_sums);
+    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateFalseScan, d_block_sums, numElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {

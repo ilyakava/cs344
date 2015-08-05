@@ -186,9 +186,9 @@ void your_sort(unsigned int* const d_inputVals,
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
     // i.e. for how many the predicate is TRUE
     checkCudaErrors(cudaMemcpy(&h_predicateTrue, d_predicate,
-                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+                               size, cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
-                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+                               size, cudaMemcpyDeviceToHost));
     *h_numPredicateTrueElements = h_predicateTrueScan[myNumElems-1] + h_predicateTrue[myNumElems-1];
     printf("nsb: %i h_numPredicateTrueElements: %i\n", nsb, *h_numPredicateTrueElements);
     checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, h_numPredicateTrueElements,

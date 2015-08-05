@@ -69,7 +69,7 @@ __global__
 void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 {
   // at the lowest level, we are still working with every other element (hence the 2 *)
-  const unsigned int id = 2 * (blockDim.x * blockIdx.x + threadIdx.x);
+  const unsigned int id = (blockDim.x * blockIdx.x + threadIdx.x);
   if (id >= numElems)
     return;
 
@@ -195,7 +195,7 @@ void your_sort(unsigned int* const d_inputVals,
     // we halve the number of threads, b/c at most, we are processing every other
     // element in the array
     int blelloch_gridSize = (1+(myNumElems / (2*blockSize)));
-    exclusive_blelloch_scan<<<blelloch_gridSize, blockSize>>>(d_predicateTrueScan, myNumElems);
+    exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateTrueScan, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
     // i.e. for how many the predicate is TRUE
@@ -222,7 +222,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateFalse
     checkCudaErrors(cudaMemcpy(d_predicateFalseScan, d_predicate, size, cudaMemcpyDeviceToDevice));
-    exclusive_blelloch_scan<<<blelloch_gridSize, blockSize>>>(d_predicateFalseScan, myNumElems);
+    exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateFalseScan, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {

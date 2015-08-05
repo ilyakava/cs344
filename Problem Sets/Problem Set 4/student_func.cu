@@ -392,7 +392,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   int acc= 0;
   for (int i = 1; i < myNumElems; i++)
-    if (h_array[i] > h_array[i-1])
+    if (h_array[i] >= h_array[i-1])
       acc++;
   if (acc == (myNumElems-1))
     printf("SUCCESS CORRECT SORT\n");

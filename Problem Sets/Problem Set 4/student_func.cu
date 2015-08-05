@@ -390,14 +390,14 @@ void your_sort(unsigned int* const d_inputVals,
   // printf("final array:\n");
   // print_array(h_array, myNumElems);
 
-  int acc= 0;
-  for (int i = 1; i < myNumElems; i++)
-    if (h_array[i] >= h_array[i-1])
-      acc++;
-  if (acc == (myNumElems-1))
-    printf("SUCCESS CORRECT SORT\n");
-  else
-    printf("ERROR INCORRECT SORT (%i pairs in the wrong order)\n", myNumElems-acc-1);
+  // int acc= 0;
+  // for (int i = 1; i < myNumElems; i++)
+  //   if (h_array[i] >= h_array[i-1])
+  //     acc++;
+  // if (acc == (myNumElems-1))
+  //   printf("SUCCESS CORRECT SORT\n");
+  // else
+  //   printf("ERROR INCORRECT SORT (%i pairs in the wrong order)\n", myNumElems-acc-1);
 
   checkCudaErrors(cudaFree(d_predicate));
   checkCudaErrors(cudaFree(d_predicateTrueScan));

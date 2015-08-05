@@ -98,7 +98,6 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
   }
   __syncthreads();
 
-  // printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3], s_block_scan[4], s_block_scan[5], s_block_scan[6], s_block_scan[7]);
 
   // downsweep
   for (i = i; i >= 2; i >>= 1) {
@@ -110,10 +109,12 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
     }
     __syncthreads();
   }
+  printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3]);
 
   // copy result to global memory
-  if (id < numElems)
+  if (id < numElems) {
     d_list[id] = s_block_scan[tid];
+  }
 }
 
 __global__

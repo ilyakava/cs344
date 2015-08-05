@@ -239,6 +239,12 @@ void your_sort(unsigned int* const d_inputVals,
       // cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     }
   }
+
+  // DEBUG
+  checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, size, cudaMemcpyDeviceToHost));
+  printf("final array:\n", bit);
+  print_array(h_array, myNumElems);
+
   checkCudaErrors(cudaFree(d_predicate));
   checkCudaErrors(cudaFree(d_predicateTrueScan));
   checkCudaErrors(cudaFree(d_predicateFalseScan));

@@ -96,7 +96,7 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
     s_block_scan[tid] = 0;
   __syncthreads();
 
-  // printf("in kernel: %i %i %i %i %i %i %i %i\n", d_list[0], d_list[1], d_list[2], d_list[3], d_list[4], d_list[5], d_list[6], d_list[7]);
+  printf("in kernel (thread: %i, block: %i): %i %i %i %i %i %i %i %i\n",tid, blockIdx.x, d_list[0], d_list[1], d_list[2], d_list[3], d_list[4], d_list[5], d_list[6], d_list[7]);
 
   // downsweep
   for (i = i; i >= 2; i >>= 1) {

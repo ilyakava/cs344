@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include <thrust/host_vector.h>
+#include <math.h>
 
 /* Red Eye Removal
    ===============
@@ -182,7 +183,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   size_t size = sizeof(unsigned int) * myNumElems;
-  int gridSize = 1 + (myNumElems / blockSize);
+  int gridSize = ceil(myNumElems / blockSize);
 
   unsigned int h_array[myNumElems];
 
@@ -217,6 +218,7 @@ void your_sort(unsigned int* const d_inputVals,
     }
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateTrue
+    printf("SCAN PREDICATE TRUE:\n");
     checkCudaErrors(cudaMemcpy(d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));
     checkCudaErrors(cudaMemset(d_block_sums, 0, gridSize*sizeof(unsigned int)));
     partial_exclusive_blelloch_scan<<<gridSize, blockSize, sizeof(unsigned int)*blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
@@ -249,6 +251,7 @@ void your_sort(unsigned int* const d_inputVals,
     flip_bit<<<gridSize, blockSize>>>(d_predicate, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateFalse
+    printf("SCAN PREDICATE FALSE:\n");
     checkCudaErrors(cudaMemcpy(d_predicateFalseScan, d_predicate, size, cudaMemcpyDeviceToDevice));
     checkCudaErrors(cudaMemset(d_block_sums, 0, gridSize*sizeof(unsigned int)));
     partial_exclusive_blelloch_scan<<<gridSize, blockSize, sizeof(unsigned int)*blockSize>>>(d_predicateFalseScan, d_block_sums, myNumElems);

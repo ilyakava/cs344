@@ -118,7 +118,8 @@ void scatter(unsigned int* const d_input, unsigned int* const d_output,
   } else {
     newLoc = d_predicateTrueScan[id];
   }
-  assert(newLoc < numElems);
+  if (newLoc >= numElems)
+    printf("d_predicateFalse[id]: %i newLoc: %i numElems: %i\n", d_predicateFalse[id], newLoc, numElems);
   d_output[newLoc] = d_input[id];
 }
 

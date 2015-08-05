@@ -180,7 +180,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 949;
+  size_t myNumElems = 948;
   int blockSize = 128;
   // printf("myNumElems: %i\n", myNumElems);
 
@@ -192,7 +192,7 @@ void your_sort(unsigned int* const d_inputVals,
   unsigned int h_array[myNumElems];
   checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, size, cudaMemcpyDeviceToHost));
   printf("array[947] = %i\n", h_array[947]);
-  printf("array[948] = %i\n", h_array[948]);
+  // printf("array[948] = %i\n", h_array[948]);
   // printf("array[949] = %i\n", h_array[949]);
 
   unsigned int h_predicate[myNumElems];

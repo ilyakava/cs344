@@ -187,6 +187,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   size_t size = sizeof(unsigned int) * myNumElems;
   int gridSize = ceil(float(myNumElems) / float(blockSize));
+  printf("gridSize: %i\n", gridSize);
 
   unsigned int h_array[myNumElems];
 

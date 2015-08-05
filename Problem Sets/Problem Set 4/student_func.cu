@@ -74,7 +74,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 
   // reduce
   unsigned int i;
-  for (i = 2; i <= numElems/2; i <<= 1) {
+  for (i = 2; i <= numElems; i <<= 1) {
     if ((id + 1) % i == 0) {
       unsigned int neighbor_offset = i>>1;
       d_list[id] += d_list[id - neighbor_offset];
@@ -91,7 +91,7 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
 
   // downsweep
   for (i = i; i >= 2; i >>= 1) {
-    printf("downsweep: %i\n", i);
+    // printf("downsweep: %i\n", i);
     __syncthreads();
     if((id + 1) % i == 0) {
       unsigned int neighbor_offset = i>>1;

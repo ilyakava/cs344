@@ -243,7 +243,7 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
                                sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
     printf("h_block_sums:\n");
-    print_array(h_block_sums, blockSize);
+    print_array(h_block_sums, gridSize);
     printf("----------\n");
 
 

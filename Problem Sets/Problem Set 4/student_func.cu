@@ -109,7 +109,7 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
     }
     __syncthreads();
   }
-  printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3]);
+  // printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3]);
 
   // copy result to global memory
   if (id < numElems) {
@@ -202,7 +202,7 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateFalseElements, sizeof(unsigned int))); // throwaway
   checkCudaErrors(cudaMalloc((void**)&d_block_sums, gridSize*sizeof(unsigned int)));
 
-  unsigned int max_bits = 1;
+  unsigned int max_bits = 30;
   for (unsigned int bit = 0; bit < max_bits; bit++) {
 
 

@@ -123,7 +123,7 @@ unsigned int* d_predicateFalseScan;
 unsigned int* d_numPredicateTrueElements;
 
 // DEBUG
-void print_array(unsigned int* array, length)
+void print_array(unsigned int* array, size_t length)
 {
   for (int i = 0; i < length; i++)
     printf("%i ", array[i]);

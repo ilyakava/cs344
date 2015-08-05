@@ -220,6 +220,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
     nsb = 1<<bit;
+    printf("bit: %i nsb: %i\n", bit, nsb);
     // create predicateTrue
     if ((bit + 1) % 2 == 1) {
       check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, myNumElems);

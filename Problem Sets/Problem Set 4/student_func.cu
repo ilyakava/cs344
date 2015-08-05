@@ -318,7 +318,7 @@ void your_sort(unsigned int* const d_inputVals,
                                sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
     printf("h_block_sums (after scan):\n");
     print_array(h_block_sums, gridSize);
-    printf("----------\n")
+    printf("----------\n");
 
 
 

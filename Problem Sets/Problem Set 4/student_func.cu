@@ -180,7 +180,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 949;
+  size_t myNumElems = 948;
   int blockSize = 128;
   // printf("myNumElems: %i\n", myNumElems);
 
@@ -190,8 +190,8 @@ void your_sort(unsigned int* const d_inputVals,
   printf("gridSize: %i\n", gridSize);
 
   unsigned int h_array[myNumElems];
-  checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, size, cudaMemcpyDeviceToHost));
-  h_array[948] = h_array[947];
+  checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, sizeof(unsigned int) * (myNumElems+1), cudaMemcpyDeviceToHost));
+  h_array[947] = h_array[948];
   checkCudaErrors(cudaMemcpy(d_inputVals, h_array, size, cudaMemcpyHostToDevice));
   // printf("array[947] = %i\n", h_array[947]);
   // printf("array[948] = %i\n", h_array[948]);
@@ -390,7 +390,7 @@ void your_sort(unsigned int* const d_inputVals,
   if (acc == (myNumElems-1))
     printf("SUCCESS CORRECT SORT\n");
   else
-    printf("ERROR INCORRECT SORT (%i pairs in the wrong order)\n", acc-myNumElems-1);
+    printf("ERROR INCORRECT SORT (%i pairs in the wrong order)\n", myNumElems-acc-1);
 
   checkCudaErrors(cudaFree(d_predicate));
   checkCudaErrors(cudaFree(d_predicateTrueScan));

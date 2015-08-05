@@ -166,7 +166,7 @@ void your_sort(unsigned int* const d_inputVals,
 
     // DEBUG
     checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, size, cudaMemcpyDeviceToHost));
-    printf("array:\n");
+    printf("bit %i array:\n", bit);
     print_array(h_array, myNumElems);
 
 

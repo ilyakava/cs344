@@ -193,7 +193,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   unsigned int h_predicate[myNumElems];
   unsigned int h_predicateScan[myNumElems];
-  unsigned int h_block_sums[blockSize];
+  unsigned int h_block_sums[gridSize];
   int nsb;
   // unsigned int* h_numPredicateElements = (unsigned int *)malloc(sizeof(unsigned int));
   unsigned int h_numPredicateElements[1];
@@ -241,7 +241,7 @@ void your_sort(unsigned int* const d_inputVals,
     print_array(h_predicateScan, myNumElems);
 
     checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
-                               sizeof(unsigned int)*blockSize, cudaMemcpyDeviceToHost));
+                               sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
     printf("h_block_sums:\n");
     print_array(h_block_sums, blockSize);
     printf("----------\n");

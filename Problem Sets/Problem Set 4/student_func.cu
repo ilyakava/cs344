@@ -109,7 +109,7 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
     }
     __syncthreads();
   }
-  // printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3]);
+  printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3]);
 
   // copy result to global memory
   if (id < numElems) {
@@ -179,7 +179,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 16;
+  size_t myNumElems = 17;
   int blockSize = 4;
   // printf("myNumElems: %i\n", myNumElems);
 

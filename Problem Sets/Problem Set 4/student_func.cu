@@ -180,26 +180,26 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 8;
-  int blockSize = 4;
+  size_t myNumElems = numElems;
+  int blockSize = 1024;
   // printf("myNumElems: %i\n", myNumElems);
 
 
   size_t size = sizeof(unsigned int) * myNumElems;
   int gridSize = ceil(float(myNumElems) / float(blockSize));
-  printf("gridSize: %i\n", gridSize);
+  // printf("gridSize: %i\n", gridSize);
 
   unsigned int h_array[myNumElems];
-  checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, sizeof(unsigned int) * (myNumElems+1), cudaMemcpyDeviceToHost));
-  h_array[0] = 2;
-  h_array[1] = 2;
-  h_array[2] = 2;
-  h_array[3] = 3;
-  h_array[4] = 3;
-  h_array[5] = 3;
-  h_array[6] = 2;
-  h_array[7] = 3;
-  checkCudaErrors(cudaMemcpy(d_inputVals, h_array, size, cudaMemcpyHostToDevice));
+  // checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, sizeof(unsigned int) * (myNumElems+1), cudaMemcpyDeviceToHost));
+  // h_array[0] = 2;
+  // h_array[1] = 2;
+  // h_array[2] = 2;
+  // h_array[3] = 3;
+  // h_array[4] = 3;
+  // h_array[5] = 3;
+  // h_array[6] = 2;
+  // h_array[7] = 3;
+  // checkCudaErrors(cudaMemcpy(d_inputVals, h_array, size, cudaMemcpyHostToDevice));
   // printf("array[947] = %i\n", h_array[947]);
   // printf("array[948] = %i\n", h_array[948]);
   // printf("array[949] = %i\n", h_array[949]);
@@ -229,7 +229,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
     nsb = 1<<bit;
-    printf("bit: %i nsb: %i\n", bit, nsb);
+    // printf("bit: %i nsb: %i\n", bit, nsb);
     // create predicateTrue
     if ((bit + 1) % 2 == 1) {
       check_bit<<<gridSize, blockSize>>>(d_inputVals, d_predicate, nsb, myNumElems);
@@ -244,32 +244,32 @@ void your_sort(unsigned int* const d_inputVals,
     partial_exclusive_blelloch_scan<<<gridSize, blockSize, sizeof(unsigned int)*blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-    printf("----------\n");
-    checkCudaErrors(cudaMemcpy(&h_predicate, d_predicate,
-                               size, cudaMemcpyDeviceToHost));
-    printf("h_predicate:\n");
-    print_array(h_predicate, myNumElems);
-    checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
-                               size, cudaMemcpyDeviceToHost));
-    printf("h_predicateScan:\n");
-    print_array(h_predicateScan, myNumElems);
+    // printf("----------\n");
+    // checkCudaErrors(cudaMemcpy(&h_predicate, d_predicate,
+    //                            size, cudaMemcpyDeviceToHost));
+    // printf("h_predicate:\n");
+    // print_array(h_predicate, myNumElems);
+    // checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
+    //                            size, cudaMemcpyDeviceToHost));
+    // printf("h_predicateScan:\n");
+    // print_array(h_predicateScan, myNumElems);
 
-    checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
-                               sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
-    printf("h_block_sums:\n");
-    print_array(h_block_sums, gridSize);
-    printf("----------\n");
+    // checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
+    //                            sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
+    // printf("h_block_sums:\n");
+    // print_array(h_block_sums, gridSize);
+    // printf("----------\n");
 
 
     partial_exclusive_blelloch_scan<<<1, BLOCK_SIZE, sizeof(unsigned int)*BLOCK_SIZE>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 
-    checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
-                               sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
-    printf("h_block_sums (after scan):\n");
-    print_array(h_block_sums, gridSize);
-    printf("----------\n");
+    // checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
+    //                            sizeof(unsigned int)*gridSize, cudaMemcpyDeviceToHost));
+    // printf("h_block_sums (after scan):\n");
+    // print_array(h_block_sums, gridSize);
+    // printf("----------\n");
 
 
     increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
@@ -277,20 +277,20 @@ void your_sort(unsigned int* const d_inputVals,
 
 
     // DEBUG
-    checkCudaErrors(cudaMemcpy(&h_predicate, d_predicate,
-                               size, cudaMemcpyDeviceToHost));
-    printf("h_predicate:\n");
-    print_array(h_predicate, myNumElems);
-    checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
-                               size, cudaMemcpyDeviceToHost));
-    printf("h_predicateScan (after increment):\n");
-    checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
-                               size, cudaMemcpyDeviceToHost));
-    print_array(h_predicateScan, myNumElems);
+    // checkCudaErrors(cudaMemcpy(&h_predicate, d_predicate,
+    //                            size, cudaMemcpyDeviceToHost));
+    // printf("h_predicate:\n");
+    // print_array(h_predicate, myNumElems);
+    // checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
+    //                            size, cudaMemcpyDeviceToHost));
+    // printf("h_predicateScan (after increment):\n");
+    // checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
+    //                            size, cudaMemcpyDeviceToHost));
+    // print_array(h_predicateScan, myNumElems);
 
-    checkCudaErrors(cudaMemcpy(&h_numPredicateElements, d_numPredicateTrueElements,
-                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
-    printf("h_numPredicateElements: %i\n", *h_numPredicateElements);
+    // checkCudaErrors(cudaMemcpy(&h_numPredicateElements, d_numPredicateTrueElements,
+    //                            sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    // printf("h_numPredicateElements: %i\n", *h_numPredicateElements);
 
 
     // transform predicateTrue -> predicateFalse

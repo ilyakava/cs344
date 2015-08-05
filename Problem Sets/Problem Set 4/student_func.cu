@@ -201,7 +201,7 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateFalseElements, sizeof(unsigned int))); // throwaway
   checkCudaErrors(cudaMalloc((void**)&d_block_sums, gridSize*sizeof(unsigned int)));
 
-  unsigned int max_bits = 30;
+  unsigned int max_bits = 1;
   for (unsigned int bit = 0; bit < max_bits; bit++) {
 
 

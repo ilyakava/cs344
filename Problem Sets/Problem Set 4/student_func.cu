@@ -85,6 +85,13 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
   // reset last to identity element
   if (id == (numElems-1))
     d_list[id] = 0;
+
+  __syncthreads();
+  printf("in kernel: ");
+  for (int i = 0; i < numElems; i++)
+    printf("%i ", d_list[i]);
+  printf("\n");
+
   // downsweep
   for (i = i; i >= 2; i >>= 1) {
     __syncthreads();

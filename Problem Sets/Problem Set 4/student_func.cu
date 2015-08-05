@@ -242,7 +242,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   // DEBUG
   checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, size, cudaMemcpyDeviceToHost));
-  printf("final array:\n", bit);
+  printf("final array:\n");
   print_array(h_array, myNumElems);
 
   checkCudaErrors(cudaFree(d_predicate));

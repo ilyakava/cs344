@@ -176,12 +176,12 @@ void your_sort(unsigned int* const d_inputVals,
 
 
   // DEBUG
-  size_t myNumElems = 1<<9;
+  size_t myNumElems = 8;
+  int blockSize = 4;
   printf("myNumElems: %i\n", myNumElems);
 
 
   size_t size = sizeof(unsigned int) * myNumElems;
-  int blockSize = 1024;
   int gridSize = 1 + (myNumElems / blockSize);
 
   unsigned int h_array[myNumElems];

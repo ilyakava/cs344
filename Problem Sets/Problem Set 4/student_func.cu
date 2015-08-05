@@ -87,13 +87,13 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
     d_list[id] = 0;
   // downsweep
   for (i = i; i >= 2; i >>= 1) {
+    __syncthreads();
     if((id + 1) % i == 0) {
       unsigned int neighbor_offset = i>>1;
       unsigned int old_neighbor = d_list[id - neighbor_offset];
       d_list[id - neighbor_offset] = d_list[id]; // copy
       d_list[id] += old_neighbor;
     }
-    __syncthreads();
   }
 }
 

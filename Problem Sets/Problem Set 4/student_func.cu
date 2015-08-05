@@ -227,12 +227,16 @@ void your_sort(unsigned int* const d_inputVals,
     partial_exclusive_blelloch_scan<<<gridSize, blockSize, sizeof(unsigned int)*blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-    // printf("----------\n");
-    // checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
-    //                            size, cudaMemcpyDeviceToHost));
-    // printf("h_predicateScan:\n");
-    // print_array(h_predicateScan, myNumElems);
-    // printf("----------\n");
+    printf("----------\n");
+    checkCudaErrors(cudaMemcpy(&h_predicate, d_predicate,
+                               size, cudaMemcpyDeviceToHost));
+    printf("h_predicate:\n");
+    print_array(h_predicate, myNumElems);
+    checkCudaErrors(cudaMemcpy(&h_predicateScan, d_predicateTrueScan,
+                               size, cudaMemcpyDeviceToHost));
+    printf("h_predicateScan:\n");
+    print_array(h_predicateScan, myNumElems);
+    printf("----------\n");
 
 
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateTrueElements, gridSize);

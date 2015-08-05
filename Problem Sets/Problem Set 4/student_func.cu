@@ -193,7 +193,8 @@ void your_sort(unsigned int* const d_inputVals,
     checkCudaErrors(cudaMemcpy(d_predicateTrueScan, d_predicate, size, cudaMemcpyDeviceToDevice));
     // we halve the number of threads, b/c at most, we are processing every other
     // element in the array
-    exclusive_blelloch_scan<<<gridSize, blockSize/2>>>(d_predicateTrueScan, myNumElems);
+    int blelloch_gridSize = (1+(myNumElems / (2*blockSize)));
+    exclusive_blelloch_scan<<<blelloch_gridSize, blockSize>>>(d_predicateTrueScan, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
     // i.e. for how many the predicate is TRUE
@@ -220,7 +221,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scan predicateFalse
     checkCudaErrors(cudaMemcpy(d_predicateFalseScan, d_predicate, size, cudaMemcpyDeviceToDevice));
-    exclusive_blelloch_scan<<<gridSize, blockSize>>>(d_predicateFalseScan, myNumElems);
+    exclusive_blelloch_scan<<<blelloch_gridSize, blockSize>>>(d_predicateFalseScan, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {
@@ -242,8 +243,8 @@ void your_sort(unsigned int* const d_inputVals,
 
   // DEBUG
   checkCudaErrors(cudaMemcpy(&h_array, d_inputVals, size, cudaMemcpyDeviceToHost));
-  printf("final array:\n");
-  print_array(h_array, myNumElems);
+  // printf("final array:\n");
+  // print_array(h_array, myNumElems);
 
   int acc= 0;
   for (int i = 1; i < myNumElems; i++)

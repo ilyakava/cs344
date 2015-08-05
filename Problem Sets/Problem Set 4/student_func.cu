@@ -274,6 +274,10 @@ void your_sort(unsigned int* const d_inputVals,
                                size, cudaMemcpyDeviceToHost));
     print_array(h_predicateScan, myNumElems);
 
+    checkCudaErrors(cudaMemcpy(&h_numPredicateElements, d_numPredicateTrueElements,
+                               sizeof(unsigned int), cudaMemcpyDeviceToHost));
+    printf("h_numPredicateElements: %i\n", *h_numPredicateElements);
+
 
     // transform predicateTrue -> predicateFalse
     flip_bit<<<gridSize, blockSize>>>(d_predicate, myNumElems);

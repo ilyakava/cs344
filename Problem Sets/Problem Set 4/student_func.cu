@@ -228,22 +228,21 @@ void your_sort(unsigned int* const d_inputVals,
 
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
     // i.e. for how many the predicate is TRUE
-    // checkCudaErrors(cudaMemcpy(&h_predicateTrue, d_predicate,
-    //                            size, cudaMemcpyDeviceToHost));
-    // checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
-    //                            size, cudaMemcpyDeviceToHost));
-    // *h_numPredicateTrueElements = h_predicateTrueScan[myNumElems-1] + h_predicateTrue[myNumElems-1];
-    // // printf("h_numPredicateTrueElements: %i\n", *h_numPredicateTrueElements);
+    checkCudaErrors(cudaMemcpy(&h_predicateTrue, d_predicate,
+                               size, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(&h_predicateTrueScan, d_predicateTrueScan,
+                               size, cudaMemcpyDeviceToHost));
+    *h_numPredicateTrueElements = h_predicateTrueScan[myNumElems-1] + h_predicateTrue[myNumElems-1];
     // checkCudaErrors(cudaMemcpy(d_numPredicateTrueElements, h_numPredicateTrueElements,
     //                            sizeof(unsigned int), cudaMemcpyHostToDevice));
 
 
     // DEBUG
-    // printf("h_predicateTrue:\n");
-    // print_array(h_predicateTrue, myNumElems);
-    // printf("h_predicateTrueScan:\n");
-    // print_array(h_predicateTrueScan, myNumElems);
-    // printf("h_numPredicateTrueElements: %i\n", *h_numPredicateTrueElements);
+    printf("h_predicateTrue:\n");
+    print_array(h_predicateTrue, myNumElems);
+    printf("h_predicateTrueScan:\n");
+    print_array(h_predicateTrueScan, myNumElems);
+    printf("h_numPredicateTrueElements: %i\n", *h_numPredicateTrueElements);
 
 
     // transform predicateTrue -> predicateFalse

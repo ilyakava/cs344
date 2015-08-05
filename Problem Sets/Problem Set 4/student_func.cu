@@ -147,7 +147,7 @@ void your_sort(unsigned int* const d_inputVals,
                unsigned int* const d_outputPos,
                const size_t numElems)
 {
-  // printf("numElems: %i\n", numElems);
+  printf("numElems: %i\n", numElems);
 
 
   // DEBUG

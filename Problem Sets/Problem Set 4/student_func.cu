@@ -165,7 +165,7 @@ void your_sort(unsigned int* const d_inputVals,
   checkCudaErrors(cudaMalloc((void**)&d_predicateFalseScan, size));
   checkCudaErrors(cudaMalloc((void**)&d_numPredicateTrueElements, sizeof(unsigned int)));
 
-  unsigned int max_bits = 1;
+  unsigned int max_bits = 32;
   for (unsigned int bit = 0; bit < max_bits; bit++) {
 
 

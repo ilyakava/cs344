@@ -310,7 +310,7 @@ void your_sort(unsigned int* const d_inputVals,
 
 
 
-    partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateFalseElements, gridSize);
+    partial_exclusive_blelloch_scan<<<1, gridSize, sizeof(unsigned int)*gridSize>>>(d_block_sums, d_numPredicateFalseElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
 

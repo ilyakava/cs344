@@ -86,11 +86,12 @@ void exclusive_blelloch_scan(unsigned int* const d_list, const size_t numElems)
   if (id == (numElems-1))
     d_list[id] = 0;
 
-  __syncthreads();
-  printf("in kernel: %i %i %i %i %i %i %i %i\n", d_list[0], d_list[1], d_list[2], d_list[3], d_list[4], d_list[5], d_list[6], d_list[7]);
+  // __syncthreads();
+  // printf("in kernel: %i %i %i %i %i %i %i %i\n", d_list[0], d_list[1], d_list[2], d_list[3], d_list[4], d_list[5], d_list[6], d_list[7]);
 
   // downsweep
   for (i = i; i >= 2; i >>= 1) {
+    printf("downsweep: %i\n", i);
     __syncthreads();
     if((id + 1) % i == 0) {
       unsigned int neighbor_offset = i>>1;

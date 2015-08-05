@@ -98,7 +98,7 @@ void partial_exclusive_blelloch_scan(unsigned int* const d_list, unsigned int* c
   }
   __syncthreads();
 
-  printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3], s_block_scan[4], s_block_scan[5], s_block_scan[6], s_block_scan[7]);
+  // printf("in kernel (thread: %i, block: %i of %i): %i %i %i %i %i %i %i %i\n",tid, blockIdx.x, blockDim.x, s_block_scan[0], s_block_scan[1], s_block_scan[2], s_block_scan[3], s_block_scan[4], s_block_scan[5], s_block_scan[6], s_block_scan[7]);
 
   // downsweep
   for (i = i; i >= 2; i >>= 1) {
@@ -226,7 +226,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums, numElems);
+    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
     // determine offset of 2nd bin, i.e. how many items are in the 1st bin,
@@ -259,7 +259,7 @@ void your_sort(unsigned int* const d_inputVals,
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateFalseElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateFalseScan, d_block_sums, numElems);
+    increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateFalseScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     // scatter values (flip input/output depending on iteration)
     if ((bit + 1) % 2 == 1) {

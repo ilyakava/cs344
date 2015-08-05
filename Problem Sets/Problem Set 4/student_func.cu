@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <thrust/host_vector.h>
 #include <math.h>
+#define BLOCK_SIZE 1024
 
 /* Red Eye Removal
    ===============
@@ -191,6 +192,7 @@ void your_sort(unsigned int* const d_inputVals,
 
   unsigned int h_predicate[myNumElems];
   unsigned int h_predicateScan[myNumElems];
+  unsigned int h_block_sums[blockSize];
   int nsb;
   // unsigned int* h_numPredicateElements = (unsigned int *)malloc(sizeof(unsigned int));
   unsigned int h_numPredicateElements[1];
@@ -236,10 +238,15 @@ void your_sort(unsigned int* const d_inputVals,
                                size, cudaMemcpyDeviceToHost));
     printf("h_predicateScan:\n");
     print_array(h_predicateScan, myNumElems);
+
+    checkCudaErrors(cudaMemcpy(&h_block_sums, d_block_sums,
+                               sizeof(unsigned int)*blockSize, cudaMemcpyDeviceToHost));
+    printf("h_block_sums:\n");
+    print_array(h_block_sums, blockSize);
     printf("----------\n");
 
 
-    partial_exclusive_blelloch_scan<<<1, blockSize, sizeof(unsigned int)*blockSize>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
+    partial_exclusive_blelloch_scan<<<1, BLOCK_SIZE, sizeof(unsigned int)*BLOCK_SIZE>>>(d_block_sums, d_numPredicateTrueElements, gridSize);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
     increment_blelloch_scan_with_block_sums<<<gridSize, blockSize>>>(d_predicateTrueScan, d_block_sums, myNumElems);
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());

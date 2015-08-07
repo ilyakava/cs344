@@ -61,9 +61,16 @@ Strong: solve same problem faster
         - Analysis tab: run analyze program
             - Global **Load** Efficiency
                 - (of all bytes fetched, how many were useful?) - 100% for fully coalesced
+                - `nvprof --metrics gld_efficiency`
+                - if over 100% its an [estimation error](https://devtalk.nvidia.com/default/topic/628818/cuda-programming-and-performance/-ldquo-global-load-efficiency-rdquo-over-100-in-visual-profiler/post/3992785/#3992785)
             - Global **Store** Efficiency
+                - `nvprof --metrics gst_efficiency`
             - DRAM utilization
+                - `nvprof --metrics dram_utilization`
+                - high = good
             - Shared Memory Replay Overhead
+                - could be from shared memory bank conflicts (almost Ninja)
+            - To see all `nvprof` metrics: `nvprof --devices 0 --query-metrics`
 
 # Parallelize Example: Matrix transpose
 

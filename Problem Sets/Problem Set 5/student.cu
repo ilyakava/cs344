@@ -107,10 +107,10 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   }
 
   // write output
-  if (tid == 0) {
+  if (tid == (blockDim.x - 1)) {
     for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
-      if (s_hists[0][minBinId + binOffset] > 0) {
-        atomicAdd(&histo[minBinId + binOffset], s_hists[0][minBinId + binOffset]);
+      if (s_hists[tid][minBinId + binOffset] > 0) {
+        atomicAdd(&histo[minBinId + binOffset], s_hists[tid][minBinId + binOffset]);
       }
     }
   }

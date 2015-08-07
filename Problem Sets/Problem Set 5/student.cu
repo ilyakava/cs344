@@ -25,6 +25,7 @@
 */
 
 #define NUM_SHARED_HISTS 4
+#define MAX_THREADS_PER_BLOCK 1024
 
 #include "utils.h"
 
@@ -77,13 +78,16 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   // basic var and bounds checking
   __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
   int tid = threadIdx.x;
-  int bin_id = threadIdx.y;
+  int first_bin_id = threadIdx.y;
+  int bins_per_thread = MAX_THREADS_PER_BLOCK / blockDim.y;
   int id = blockDim.x * blockIdx.x + tid;
 
   // put initial values into shared histograms
-  s_hists[tid][bin_id] = 0;
-  unsigned int bin = vals[id];
-  if (id < numElems && bin == bin_id) {
+  for (int bin_offset = 0; bin_offset < bins_per_thread; bin_offset++) {
+    s_hists[tid][bin_id + bin_offset] = 0;
+  }
+  if (id < numElems) {
+    unsigned int bin = vals[id];
     s_hists[tid][bin] = 1;
   }
   __syncthreads();
@@ -95,15 +99,19 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
     unsigned int neighbor_id = tid - neighbor_offset;
     if (((tid + 1) % ith_hist) == 0)
     {
-      s_hists[tid][bin_id] += s_hists[neighbor_id][bin_id];
+      for (int bin_offset = 0; bin_offset < bins_per_thread; bin_offset++) {
+        s_hists[tid][bin_id + bin_offset] += s_hists[neighbor_id][bin_id + bin_offset];
+      }
     }
     __syncthreads();
   }
 
   // write output
   if (tid == 0) {
-    if (s_hists[0][bin_id] > 0) {
-      atomicAdd(&histo[bin_id], s_hists[0][bin_id]);
+    for (int bin_offset = 0; bin_offset < bins_per_thread; bin_offset++) {
+      if (s_hists[0][bin_id + bin_offset] > 0) {
+        atomicAdd(&histo[bin_id + bin_offset], s_hists[0][bin_id + bin_offset]);
+      }
     }
   }
 }
@@ -114,7 +122,8 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
                       const unsigned int numElems)
 {
   // int numThreads = NUM_SHARED_HISTS;
-  const dim3 numThreads(NUM_SHARED_HISTS, 1024);
+
+  const dim3 numThreads(NUM_SHARED_HISTS, MAX_THREADS_PER_BLOCK / NUM_SHARED_HISTS);
   int numBlocks = 1 + numElems / numThreads.x;
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);

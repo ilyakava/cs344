@@ -24,20 +24,105 @@
 
 */
 
+#define NUM_SHARED_HISTS 4
+#define MAX_THREADS_PER_BLOCK 1024
+#define NUM_VALS_PER_THREAD 21
 
 #include "utils.h"
 
 __global__
-void yourHisto(const unsigned int* const vals, //INPUT
+void baseline(const unsigned int* const vals, //INPUT
                unsigned int* const histo,      //OUPUT
-               int numVals)
+               const unsigned int numBins,
+               const unsigned int numElems)
 {
-  //TODO fill in this kernel to calculate the histogram
-  //as quickly as possible
+  // 1.4254ms
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  if (id >= numElems)
+    return;
 
-  //Although we provide only one kernel skeleton,
-  //feel free to use more if it will help you
-  //write faster code
+  int bin = vals[id];
+  atomicAdd((histo + bin), 1);
+}
+
+__global__
+void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
+               unsigned int* const histo,      //OUPUT
+               const unsigned int numBins,
+               const unsigned int numElems)
+{
+  // NUM_VALS_PER_THREAD = 1 : 1.2942ms
+  // NUM_VALS_PER_THREAD = 2 : 965.25us
+  // NUM_VALS_PER_THREAD = 3 : 884.42us
+  // NUM_VALS_PER_THREAD = 4 : 843.81us
+  // NUM_VALS_PER_THREAD = 5 : 814.95us
+  // NUM_VALS_PER_THREAD = 10 : 755.37us
+  // NUM_VALS_PER_THREAD = 18 : 730.79us
+  // NUM_VALS_PER_THREAD = 20 : 726.89us
+
+  // NUM_VALS_PER_THREAD = 21 : 723.43us
+
+  // NUM_VALS_PER_THREAD = 22 : 729.29us
+  // NUM_VALS_PER_THREAD = 23 : 730.19us
+  // NUM_VALS_PER_THREAD = 25 : 732.11us
+  // NUM_VALS_PER_THREAD = 30 : 746.28us
+  // NUM_VALS_PER_THREAD = 40 : 746.57us
+
+  extern __shared__ unsigned int s_histo[];
+
+  s_histo[threadIdx.x] = 0;
+  __syncthreads();
+
+  for (int i = 0; i < NUM_VALS_PER_THREAD; i++) {
+    int id = blockDim.x * (i + NUM_VALS_PER_THREAD * blockIdx.x) + threadIdx.x;
+    if (id < numElems) {
+      unsigned int bin = vals[id];
+      atomicAdd(&s_histo[bin], 1);
+    }
+  }
+
+  __syncthreads();
+
+  // putting an if here makes it 20us slower
+  atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
+}
+
+__global__
+void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
+               unsigned int* const histo,      //OUPUT
+               const unsigned int numBins,
+               const unsigned int numElems)
+{
+  // 3.33828s
+  // avoids using atomic add until writing to global
+
+  // basic var and bounds checking
+  __shared__ unsigned int s_val[MAX_THREADS_PER_BLOCK];
+  int tid = threadIdx.x;
+  int binId = blockIdx.y;
+  int id = blockDim.x * blockIdx.x + tid;
+
+  // put initial values into shared histograms
+  s_val[tid] = 0;
+  if (id < numElems && (binId == vals[id])) {
+    s_val[tid] = 1;
+  }
+  __syncthreads();
+
+  // reduce
+  for (unsigned int ithVal = 2; ithVal <= blockDim.x; ithVal <<= 1)
+  {
+    unsigned int neighborOffset = ithVal>>1;
+    if (((tid + 1) % ithVal) == 0) {
+      s_val[tid] += s_val[tid - neighborOffset];
+    }
+    __syncthreads();
+  }
+
+  // write output
+  if (tid == (blockDim.x - 1)) {
+    atomicAdd(&histo[binId], s_val[tid]);
+  }
 }
 
 void computeHistogram(const unsigned int* const d_vals, //INPUT
@@ -45,10 +130,17 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
                       const unsigned int numBins,
                       const unsigned int numElems)
 {
-  //TODO Launch the yourHisto kernel
+  int numThreads1 = MAX_THREADS_PER_BLOCK;
+  int numBlocks1 = 1 + numElems / numThreads1;
 
-  //if you want to use/launch more than one kernel,
-  //feel free
+  int numThreads2 = MAX_THREADS_PER_BLOCK;
+  int numBlocks2 = 1 + numElems / (NUM_VALS_PER_THREAD*numThreads2);
 
+  const dim3 numThreads3(MAX_THREADS_PER_BLOCK, 1, 1);
+  const dim3 numBlocks3(1 + numElems / numThreads3.x, numBins, 1);
+
+  // baseline<<<numBlocks1, numThreads1>>>(d_vals, d_histo, numBins, numElems);
+  distribute_atomics_on_shmem_first<<<numBlocks2, numThreads2, sizeof(unsigned int)*numThreads2>>>(d_vals, d_histo, numBins, numElems);
+  // reduce_on_shmem_first<<<numBlocks3, numThreads3, sizeof(unsigned int)*MAX_THREADS_PER_BLOCK>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

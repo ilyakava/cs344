@@ -61,7 +61,7 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
 
   __syncthreads();
 
-  atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
+  atomicAdd(&histo[threadIdx.x], 1);
 }
 
 void computeHistogram(const unsigned int* const d_vals, //INPUT

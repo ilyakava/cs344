@@ -75,7 +75,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
                const unsigned int numElems)
 {
   // basic var and bounds checking
-  extern __shared__ unsigned int s_hists[8][1024];
+  __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
   int tid = threadIdx.x;
   int id = blockDim.x * blockIdx.x + tid;
   if (id >= numElems)

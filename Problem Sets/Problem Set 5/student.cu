@@ -53,7 +53,7 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
     return;
 
   unsigned int bin = vals[id];
-  atomicAdd(s_histo[bin], 1);
+  atomicAdd(&s_histo[bin], 1);
   __syncthreads();
 
   atomicAdd((histo + threadIdx.x), s_histo[threadIdx.x]);

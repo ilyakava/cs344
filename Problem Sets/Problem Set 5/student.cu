@@ -48,7 +48,7 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
                const unsigned int numBins,
                const unsigned int numElems)
 {
-  extern __shared__ unsigned int s_histo[numBins];
+  extern __shared__ unsigned int s_histo[];
 
   int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)

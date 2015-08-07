@@ -77,14 +77,13 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   // basic var and bounds checking
   __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
   int tid = threadIdx.x;
+  int bin_id = threadIdx.x;
   int id = blockDim.x * blockIdx.x + tid;
 
   // put initial values into shared histograms
-  for (int i = 0; i < numBins; i++) {
-    s_hists[tid][i] = 0;
-  }
-  if (id < numElems) {
-    unsigned int bin = vals[id];
+  s_hists[tid][bin_id] = 0;
+  unsigned int bin = vals[id];
+  if (id < numElems && bin == bin_id) {
     s_hists[tid][bin] = 1;
   }
   __syncthreads();
@@ -96,17 +95,15 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
     unsigned int neighbor_id = tid - neighbor_offset;
     if (((tid + 1) % ith_hist) == 0)
     {
-      for (int i = 0; i < numBins; i++) {
-        s_hists[tid][i] += s_hists[neighbor_id][i];
-      }
+      s_hists[tid][bin_id] += s_hists[neighbor_id][bin_id];
     }
     __syncthreads();
   }
 
   // write output
   if (tid == 0) {
-    for (int i = 0; i < numBins; i++) {
-      atomicAdd(&histo[i], s_hists[0][i]);
+    if (s_hists[0][bin_id] > 0) {
+      atomicAdd(&histo[bin_id], s_hists[0][bin_id]);
     }
   }
 }
@@ -116,8 +113,9 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
                       const unsigned int numBins,
                       const unsigned int numElems)
 {
-  int numThreads = NUM_SHARED_HISTS;
-  int numBlocks = 1 + numElems / numThreads;
+  // int numThreads = NUM_SHARED_HISTS;
+  const dim3 numThreads(NUM_SHARED_HISTS, 1024);
+  int numBlocks = 1 + numElems / numThreads.x;
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
   // distribute_atomics_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numThreads>>>(d_vals, d_histo, numBins, numElems);

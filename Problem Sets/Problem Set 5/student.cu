@@ -78,13 +78,13 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   // basic var and bounds checking
   __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
   int tid = threadIdx.x;
-  int bin_id = threadIdx.y;
-  int bins_per_thread = MAX_THREADS_PER_BLOCK / blockDim.y;
+  int minBinId = threadIdx.y;
+  int binsPerThread = numBins / blockDim.y;
   int id = blockDim.x * blockIdx.x + tid;
 
   // put initial values into shared histograms
-  for (int bin_offset = 0; bin_offset < bins_per_thread; bin_offset++) {
-    s_hists[tid][bin_id + bin_offset] = 0;
+  for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
+    s_hists[tid][minBinId + binOffset] = 0;
   }
   if (id < numElems) {
     unsigned int bin = vals[id];
@@ -99,8 +99,8 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
     unsigned int neighbor_id = tid - neighbor_offset;
     if (((tid + 1) % ith_hist) == 0)
     {
-      for (int bin_offset = 0; bin_offset < bins_per_thread; bin_offset++) {
-        s_hists[tid][bin_id + bin_offset] += s_hists[neighbor_id][bin_id + bin_offset];
+      for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
+        s_hists[tid][minBinId + binOffset] += s_hists[neighbor_id][minBinId + binOffset];
       }
     }
     __syncthreads();
@@ -108,9 +108,9 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
 
   // write output
   if (tid == 0) {
-    for (int bin_offset = 0; bin_offset < bins_per_thread; bin_offset++) {
-      if (s_hists[0][bin_id + bin_offset] > 0) {
-        atomicAdd(&histo[bin_id + bin_offset], s_hists[0][bin_id + bin_offset]);
+    for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
+      if (s_hists[0][minBinId + binOffset] > 0) {
+        atomicAdd(&histo[minBinId + binOffset], s_hists[0][minBinId + binOffset]);
       }
     }
   }

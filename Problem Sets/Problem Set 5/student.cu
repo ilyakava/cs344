@@ -83,7 +83,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   for (int i = 0; i < numBins; i++) {
     s_hists[tid][i] = 0;
   }
-  if (id >= numElems) {
+  if (id <= numElems) {
     unsigned int bin = vals[id];
     s_hists[tid][bin] = 1;
   }
@@ -104,11 +104,11 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   }
 
   // write output
-  // if (tid == 0) {
-  //   for (int i = 0; i < numBins; i++) {
-  //     atomicAdd(&histo[i], s_hists[0][i]);
-  //   }
-  // }
+  if (tid == 0) {
+    for (int i = 0; i < numBins; i++) {
+      atomicAdd(&histo[i], s_hists[0][i]);
+    }
+  }
 }
 
 void computeHistogram(const unsigned int* const d_vals, //INPUT

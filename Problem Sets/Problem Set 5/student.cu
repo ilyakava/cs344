@@ -48,6 +48,7 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
                const unsigned int numBins,
                const unsigned int numElems)
 {
+  // 1.2942ms
   extern __shared__ unsigned int s_histo[];
 
   s_histo[threadIdx.x] = 0;
@@ -74,7 +75,7 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
   int numThreads = numBins;
   int numBlocks = 1 + numElems / numThreads;
 
-  // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
-  distribute_atomics_on_shmem_first<<<numBlocks, numBins, sizeof(unsigned int)*numBins>>>(d_vals, d_histo, numBins, numElems);
+  baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
+  // distribute_atomics_on_shmem_first<<<numBlocks, numBins, sizeof(unsigned int)*numBins>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

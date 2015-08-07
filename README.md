@@ -1,4 +1,4 @@
-cs344
+[cs344](https://www.udacity.com/course/intro-to-parallel-programming--cs344)
 =====
 
 Introduction to Parallel Programming class code
@@ -27,7 +27,7 @@ make
 
 - [Udacity forum](https://discussions.udacity.com/c/standalone-courses/intro-to-parallel-programming)
 - Other courses
-    - [Saarland ws1213](https://graphics.cg.uni-saarland.de/fileadmin/cguds/courses/ws1213/pp_cuda/)
+    - [Saraviensis ws1213](https://graphics.cg.uni-saarland.de/fileadmin/cguds/courses/ws1213/pp_cuda/)
     - [UC Davis EEC 171](http://www.nvidia.com/object/cudau_ucdavis)
         - taught by John Owens
         - [Computer Architecture: A Quantitative Approach, 4th Ed](http://www.amazon.com/Computer-Architecture-Quantitative-Approach-Edition/dp/0123704901)

@@ -81,7 +81,7 @@ Scan is efficient on GPUs thanks to Blelloch, and so its the core of a number of
 
 ## GPU performance leader: radix sort [pronounced: raid-ichs]
 
-- algorithm:
+- [algorithm](http://stackoverflow.com/a/31840945/2256243):
     - start with least significant bit (LSB)
     - split into two sets based on it (otherwise preserving order)
         - get the predicate by anding with a number that has that bit as 1, and every other bit as 0

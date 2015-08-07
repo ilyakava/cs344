@@ -58,7 +58,6 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
     return;
 
   unsigned int bin = vals[id];
-  assert(bin < numBins);
 
   atomicAdd(&s_histo[bin], 1);
 

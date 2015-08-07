@@ -87,28 +87,28 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   //   unsigned int bin = vals[id];
   //   s_hists[tid][bin] = 1;
   // }
-  __syncthreads();
+  // __syncthreads();
 
-  // reduce
-  for (unsigned int ith_hist = 2; ith_hist <= NUM_SHARED_HISTS / 2; ith_hist <<= 1)
-  {
-    unsigned int neighbor_offset = ith_hist>>1;
-    unsigned int neighbor_id = tid - neighbor_offset;
-    if (((tid + 1) % ith_hist) == 0)
-    {
-      for (int i = 0; i < numBins; i++) {
-        s_hists[tid][i] += s_hists[neighbor_id][i];
-      }
-    }
-    __syncthreads();
-  }
+  // // reduce
+  // for (unsigned int ith_hist = 2; ith_hist <= NUM_SHARED_HISTS / 2; ith_hist <<= 1)
+  // {
+  //   unsigned int neighbor_offset = ith_hist>>1;
+  //   unsigned int neighbor_id = tid - neighbor_offset;
+  //   if (((tid + 1) % ith_hist) == 0)
+  //   {
+  //     for (int i = 0; i < numBins; i++) {
+  //       s_hists[tid][i] += s_hists[neighbor_id][i];
+  //     }
+  //   }
+  //   __syncthreads();
+  // }
 
-  // write output
-  if (tid == 0) {
-    for (int i = 0; i < numBins; i++) {
-      atomicAdd(&histo[i], s_hists[0][i]);
-    }
-  }
+  // // write output
+  // if (tid == 0) {
+  //   for (int i = 0; i < numBins; i++) {
+  //     atomicAdd(&histo[i], s_hists[0][i]);
+  //   }
+  // }
 }
 
 void computeHistogram(const unsigned int* const d_vals, //INPUT

@@ -77,7 +77,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   // basic var and bounds checking
   __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
   int tid = threadIdx.x;
-  int bin_id = threadIdx.x;
+  int bin_id = threadIdx.y;
   int id = blockDim.x * blockIdx.x + tid;
 
   // put initial values into shared histograms

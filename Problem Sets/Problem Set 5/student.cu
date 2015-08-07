@@ -49,10 +49,10 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
                const unsigned int numElems)
 {
   // 1.2942ms
-  extern __shared__ unsigned int s_histo[];
+  extern __shared__ unsigned int s_histo[] = {0};
 
-  s_histo[threadIdx.x] = 0;
-  __syncthreads();
+  // s_histo[threadIdx.x] = 0;
+  // __syncthreads();
 
   int id = blockDim.x * blockIdx.x + threadIdx.x;
   if (id >= numElems)
@@ -66,6 +66,32 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
 
   atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
 }
+
+// __global__
+// void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
+//                unsigned int* const histo,      //OUPUT
+//                const unsigned int numBins,
+//                const unsigned int numElems)
+// {
+//   extern __shared__ unsigned int s_histo[];
+
+//   s_histo[threadIdx.x] = 0;
+//   __syncthreads();
+
+//   int id = blockDim.x * blockIdx.x + threadIdx.x;
+//   if (id >= numElems)
+//     return;
+
+//   unsigned int local_bins[numBins];
+//   unsigned int bin = vals[id];
+//   local_bins[bin] = 1;
+
+//   atomicAdd(&s_histo[bin], 1);
+
+//   __syncthreads();
+
+//   atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
+// }
 
 void computeHistogram(const unsigned int* const d_vals, //INPUT
                       unsigned int* const d_histo,      //OUTPUT

@@ -76,43 +76,31 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
                const unsigned int numElems)
 {
   // basic var and bounds checking
-  __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
+  __shared__ unsigned int s_val[blockDim.x];
   int tid = threadIdx.x;
-  int minBinId = threadIdx.y;
-  int binsPerThread = numBins / blockDim.y;
+  int binId = blockIdx.y;
   int id = blockDim.x * blockIdx.x + tid;
 
   // put initial values into shared histograms
-  for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
-    s_hists[tid][minBinId + binOffset] = 0;
-  }
-  if (id < numElems) {
-    unsigned int bin = vals[id];
-    s_hists[tid][bin] = 1;
+  s_val[tid] = 0;
+  if (id < numElems && (binId == vals[id])) {
+    s_val[tid] = 1;
   }
   __syncthreads();
 
   // reduce
-  for (unsigned int ith_hist = 2; ith_hist <= NUM_SHARED_HISTS; ith_hist <<= 1)
+  for (unsigned int ithVal = 2; ithVal <= blockDim.x; ithVal <<= 1)
   {
-    unsigned int neighbor_offset = ith_hist>>1;
-    unsigned int neighbor_id = tid - neighbor_offset;
-    if (((tid + 1) % ith_hist) == 0)
-    {
-      for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
-        s_hists[tid][minBinId + binOffset] += s_hists[neighbor_id][minBinId + binOffset];
-      }
+    unsigned int neighborOffset = ithVal>>1;
+    if (((tid + 1) % ithVal) == 0) {
+      s_val[tid] += s_val[tid - neighborOffset];
     }
     __syncthreads();
   }
 
   // write output
   if (tid == (blockDim.x - 1)) {
-    for (int binOffset = 0; binOffset < binsPerThread; binOffset++) {
-      if (s_hists[tid][minBinId + binOffset] > 0) {
-        atomicAdd(&histo[minBinId + binOffset], s_hists[tid][minBinId + binOffset]);
-      }
-    }
+    atomicAdd(&histo[binId], s_val[tid]);
   }
 }
 
@@ -123,11 +111,11 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
 {
   // int numThreads = NUM_SHARED_HISTS;
 
-  const dim3 numThreads(NUM_SHARED_HISTS, MAX_THREADS_PER_BLOCK / NUM_SHARED_HISTS);
-  int numBlocks = 1 + numElems / numThreads.x;
+  const dim3 numThreads(MAX_THREADS_PER_BLOCK, 1, 1);
+  const dim3 numBlocks(1 + numElems / numThreads.x, numBins, 1);
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
   // distribute_atomics_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numThreads>>>(d_vals, d_histo, numBins, numElems);
-  reduce_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numBins*NUM_SHARED_HISTS>>>(d_vals, d_histo, numBins, numElems);
+  reduce_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*MAX_THREADS_PER_BLOCK>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

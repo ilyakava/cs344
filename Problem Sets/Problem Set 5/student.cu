@@ -83,7 +83,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   for (int i = 0; i < numBins; i++) {
     s_hists[tid][i] = 0;
   }
-  if (id <= numElems) {
+  if (id < numElems) {
     unsigned int bin = vals[id];
     s_hists[tid][bin] = 1;
   }

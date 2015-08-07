@@ -76,7 +76,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
                const unsigned int numElems)
 {
   // basic var and bounds checking
-  __shared__ unsigned int s_val[blockDim.x];
+  __shared__ unsigned int s_val[MAX_THREADS_PER_BLOCK];
   int tid = threadIdx.x;
   int binId = blockIdx.y;
   int id = blockDim.x * blockIdx.x + tid;

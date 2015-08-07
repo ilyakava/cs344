@@ -78,7 +78,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   // basic var and bounds checking
   __shared__ unsigned int s_hists[NUM_SHARED_HISTS][1024];
   int tid = threadIdx.x;
-  int first_bin_id = threadIdx.y;
+  int bin_id = threadIdx.y;
   int bins_per_thread = MAX_THREADS_PER_BLOCK / blockDim.y;
   int id = blockDim.x * blockIdx.x + tid;
 

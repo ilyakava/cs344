@@ -24,7 +24,7 @@
 
 */
 
-#define NUM_SHARED_HISTS 8
+#define NUM_SHARED_HISTS 4
 
 #include "utils.h"
 

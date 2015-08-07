@@ -30,11 +30,12 @@
 __global__
 void baseline(const unsigned int* const vals, //INPUT
                unsigned int* const histo,      //OUPUT
-               int numVals)
+               const unsigned int numBins,
+               const unsigned int numElems)
 {
   // 1.4254ms
   int id = blockDim.x * blockIdx.x + threadIdx.x;
-  if (id >= numVals)
+  if (id >= numElems)
     return;
 
   int bin = vals[id];
@@ -44,15 +45,17 @@ void baseline(const unsigned int* const vals, //INPUT
 __global__
 void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
                unsigned int* const histo,      //OUPUT
-               int numVals)
+               const unsigned int numBins,
+               const unsigned int numElems)
 {
   extern __shared__ unsigned int s_histo[];
 
   int id = blockDim.x * blockIdx.x + threadIdx.x;
-  if (id >= numVals)
+  if (id >= numElems)
     return;
 
   unsigned int bin = vals[id];
+  assert(bin < numBins);
   atomicAdd(&s_histo[bin], 1);
   __syncthreads();
 
@@ -67,7 +70,7 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
   int numThreads = 1024;
   int numBlocks = 1 + numElems / 1024;
 
-  // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numElems);
-  distribute_atomics_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numThreads>>>(d_vals, d_histo, numElems);
+  // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
+  distribute_atomics_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numThreads>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

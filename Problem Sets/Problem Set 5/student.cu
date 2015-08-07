@@ -28,16 +28,16 @@
 #include "utils.h"
 
 __global__
-void yourHisto(const unsigned int* const vals, //INPUT
+void baseline(const unsigned int* const vals, //INPUT
                unsigned int* const histo,      //OUPUT
                int numVals)
 {
-  //TODO fill in this kernel to calculate the histogram
-  //as quickly as possible
+  int id = blockDim.x * blockIdx.x + threadIdx.x;
+  if (id >= numVals)
+    return;
 
-  //Although we provide only one kernel skeleton,
-  //feel free to use more if it will help you
-  //write faster code
+  int bin = vals[id];
+  atomicAdd((histo + bin), 1);
 }
 
 void computeHistogram(const unsigned int* const d_vals, //INPUT
@@ -45,10 +45,9 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
                       const unsigned int numBins,
                       const unsigned int numElems)
 {
-  //TODO Launch the yourHisto kernel
+  int numThreads = 1024;
+  int numBlocks = 1 + numElems / 1024;
 
-  //if you want to use/launch more than one kernel,
-  //feel free
-
+  baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

@@ -90,7 +90,7 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   __syncthreads();
 
   // reduce
-  for (unsigned int ith_hist = 2; i <= NUM_SHARED_HISTS / 2; i <<= 1)
+  for (unsigned int ith_hist = 2; ith_hist <= NUM_SHARED_HISTS / 2; ith_hist <<= 1)
   {
     unsigned int neighbor_offset = ith_hist>>1;
     unsigned int neighbor_id = tid - neighbor_offset;
@@ -106,7 +106,6 @@ void reduce_on_shmem_first(const unsigned int* const vals, //INPUT
   // write output
   if (tid == 0) {
     for (int i = 0; i < numBins; i++) {
-      s_hists[tid][i];
       atomicAdd(&histo[i], s_hists[tid][i]);
     }
   }

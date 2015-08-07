@@ -116,11 +116,11 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
                       const unsigned int numBins,
                       const unsigned int numElems)
 {
-  int numThreads = numBins;
+  int numThreads = NUM_SHARED_HISTS;
   int numBlocks = 1 + numElems / numThreads;
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
-  // distribute_atomics_on_shmem_first<<<numBlocks, numBins, sizeof(unsigned int)*numBins>>>(d_vals, d_histo, numBins, numElems);
-  reduce_on_shmem_first<<<numBlocks, numBins, sizeof(unsigned int)*numBins*NUM_SHARED_HISTS>>>(d_vals, d_histo, numBins, numElems);
+  // distribute_atomics_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numThreads>>>(d_vals, d_histo, numBins, numElems);
+  reduce_on_shmem_first<<<numBlocks, numThreads, sizeof(unsigned int)*numBins*NUM_SHARED_HISTS>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

@@ -121,7 +121,7 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
   const dim3 numBlocks3(1 + numElems / numThreads.x, numBins, 1);
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
-  distribute_atomics_on_shmem_first<<<numBlocks2, numThreads2, sizeof(unsigned int)*numThreads>>>(d_vals, d_histo, numBins, numElems);
+  distribute_atomics_on_shmem_first<<<numBlocks2, numThreads2, sizeof(unsigned int)*numThreads2>>>(d_vals, d_histo, numBins, numElems);
   // reduce_on_shmem_first<<<numBlocks3, numThreads3, sizeof(unsigned int)*MAX_THREADS_PER_BLOCK>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

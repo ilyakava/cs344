@@ -26,7 +26,7 @@
 
 #define NUM_SHARED_HISTS 4
 #define MAX_THREADS_PER_BLOCK 1024
-#define NUM_VALS_PER_THREAD 3
+#define NUM_VALS_PER_THREAD 4
 
 #include "utils.h"
 
@@ -53,6 +53,7 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
 {
   // NUM_VALS_PER_THREAD = 1 : 1.2942ms
   // NUM_VALS_PER_THREAD = 2 : 965.25us
+  // NUM_VALS_PER_THREAD = 3 : 884.42us
 
   extern __shared__ unsigned int s_histo[];
 

@@ -66,8 +66,7 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
 
   __syncthreads();
 
-  if (s_histo[threadIdx.x])
-    atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
+  atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
 }
 
 __global__

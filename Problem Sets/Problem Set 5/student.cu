@@ -118,7 +118,7 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
   int numBlocks2 = 1 + numElems / numThreads2;
 
   const dim3 numThreads3(MAX_THREADS_PER_BLOCK, 1, 1);
-  const dim3 numBlocks3(1 + numElems / numThreads.x, numBins, 1);
+  const dim3 numBlocks3(1 + numElems / numThreads3.x, numBins, 1);
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
   distribute_atomics_on_shmem_first<<<numBlocks2, numThreads2, sizeof(unsigned int)*numThreads2>>>(d_vals, d_histo, numBins, numElems);

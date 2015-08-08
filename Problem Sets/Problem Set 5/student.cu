@@ -66,6 +66,38 @@ void distribute_atomics_on_shmem_first(const unsigned int* const vals, //INPUT
 
   __syncthreads();
 
+  // putting an if here makes it 20us slower
+  atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
+}
+
+__global__
+void distribute_atomics_on_shmem_first2(const unsigned int* const vals, //INPUT
+               unsigned int* const histo,      //OUPUT
+               const unsigned int numBins,
+               const unsigned int numElems)
+{
+  // 1.2942ms
+  extern __shared__ unsigned int s_histo[];
+
+  s_histo[threadIdx.x] = 0;
+  __syncthreads();
+
+  int id1 = blockDim.x * (2 * blockIdx.x) + threadIdx.x;
+  int id2 = blockDim.x * (1 + 2 * blockIdx.x) + threadIdx.x;
+
+  if (id1 >= numElems) {
+    unsigned int bin1 = vals[id1];
+    atomicAdd(&s_histo[bin1], 1);
+  }
+
+  if (id2 < numElems) {
+    unsigned int bin2 = vals[id2];
+    atomicAdd(&s_histo[bin2], 1);
+  }
+
+  __syncthreads();
+
+  // putting an if here makes it 20us slower
   atomicAdd(&histo[threadIdx.x], s_histo[threadIdx.x]);
 }
 
@@ -114,13 +146,13 @@ void computeHistogram(const unsigned int* const d_vals, //INPUT
   // int numThreads = NUM_SHARED_HISTS;
 
   int numThreads2 = MAX_THREADS_PER_BLOCK;
-  int numBlocks2 = 1 + numElems / numThreads2;
+  int numBlocks2 = 1 + numElems / (2*numThreads2);
 
   const dim3 numThreads3(MAX_THREADS_PER_BLOCK, 1, 1);
   const dim3 numBlocks3(1 + numElems / numThreads3.x, numBins, 1);
 
   // baseline<<<numBlocks, numThreads>>>(d_vals, d_histo, numBins, numElems);
-  distribute_atomics_on_shmem_first<<<numBlocks2, numThreads2, sizeof(unsigned int)*numThreads2>>>(d_vals, d_histo, numBins, numElems);
+  distribute_atomics_on_shmem_first2<<<numBlocks2, numThreads2, sizeof(unsigned int)*numThreads2>>>(d_vals, d_histo, numBins, numElems);
   // reduce_on_shmem_first<<<numBlocks3, numThreads3, sizeof(unsigned int)*MAX_THREADS_PER_BLOCK>>>(d_vals, d_histo, numBins, numElems);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 }

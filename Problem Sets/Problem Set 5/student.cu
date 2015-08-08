@@ -85,7 +85,7 @@ void distribute_atomics_on_shmem_first2(const unsigned int* const vals, //INPUT
   int id1 = blockDim.x * (2 * blockIdx.x) + threadIdx.x;
   int id2 = blockDim.x * (1 + 2 * blockIdx.x) + threadIdx.x;
 
-  if (id1 >= numElems) {
+  if (id1 < numElems) {
     unsigned int bin1 = vals[id1];
     atomicAdd(&s_histo[bin1], 1);
   }

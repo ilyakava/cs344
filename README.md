@@ -54,3 +54,4 @@ make
         - [1](http://http.developer.nvidia.com/GPUGems/gpugems_part01.html)
         - [2](http://http.developer.nvidia.com/GPUGems2/gpugems2_frontmatter.html)
         - [3](http://http.developer.nvidia.com/GPUGems3/gpugems3_pref01.html)
+    - NVLabs [Design patterns for GPU computing](http://nvlabs.github.io/moderngpu/)

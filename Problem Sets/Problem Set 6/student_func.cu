@@ -12,10 +12,10 @@
    The basic ideas are as follows:
 
    1) Figure out the interior and border of the source image
-   2) Use the values of the border pixels in the destination image 
+   2) Use the values of the border pixels in the destination image
       as boundary conditions for solving a Poisson equation that tells
       us how to blend the images.
-   
+
       No pixels from the destination except pixels on the border
       are used to compute the match.
 
@@ -28,7 +28,7 @@
    until it stops changing.  If the problem was well-suited for the method
    then it will stop and where it stops will be the solution.
 
-   The Jacobi method is the simplest iterative method and converges slowly - 
+   The Jacobi method is the simplest iterative method and converges slowly -
    that is we need a lot of iterations to get to the answer, but it is the
    easiest method to write.
 
@@ -62,52 +62,287 @@
     In this assignment we will do 800 iterations.
    */
 
-
-
+// set this to an even number
+#define JACOBI_ITR 800
 #include "utils.h"
 #include <thrust/host_vector.h>
+
+__global__ void
+poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* const ImageGuess_prev,
+                                  const unsigned char* const source, const unsigned char* const target,
+                                  const unsigned char* const d_sourceMaskInteriorMap, const unsigned char* const d_sourceMask,
+                                  const size_t numRowsSource, const size_t numColsSource)
+{
+  const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
+                                      blockIdx.y * blockDim.y + threadIdx.y);
+  if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
+    return;
+  const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
+  if (d_sourceMask[thread_1D_id] == 0)
+    return;
+
+  const unsigned char spx = source[thread_1D_id];
+  char neighbors[4][2] = {
+    {0,1},
+    {1,0},
+    {0,-1},
+    {-1,0}
+  };
+  int Sum1 = 0;
+  int Sum2 = 0;
+
+  // Note: no neighbor bounds checking since the mask is assumed to not flow
+  // off the edge of the image
+  for (char i = 0; i < 4; i++) {
+    int neighbor_1D_id = (thread_2D_id.x + neighbors[i][0]) + (thread_2D_id.y + neighbors[i][1]) * numColsSource;
+    if (d_sourceMaskInteriorMap[neighbor_1D_id] == 4)
+      Sum1 += ImageGuess_prev[neighbor_1D_id];
+    else
+      Sum1 += target[neighbor_1D_id];
+    Sum2 += spx - source[neighbor_1D_id];
+  }
+
+  float newVal = (Sum1 + Sum2) / 4.0f;
+  ImageGuess_next[thread_1D_id] = min(255, max(0, newVal));
+}
+
+__global__ void
+map_source_to_mask(const uchar4* const d_sourceImg, unsigned char* const d_sourceMask,
+                   const size_t numRowsSource, const size_t numColsSource)
+{
+  const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
+                                      blockIdx.y * blockDim.y + threadIdx.y);
+  if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
+    return;
+  const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
+
+  const uchar4 px = d_sourceImg[thread_1D_id];
+  int brightness = px.x + px.y + px.z;
+  if (brightness == 765)
+    d_sourceMask[thread_1D_id] = 1;
+}
+
+__global__ void
+stencil_2d_von_neumann(const unsigned char* const d_in, unsigned char* const d_out,
+                       const size_t numRows, const size_t numCols)
+{
+  const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
+                                      blockIdx.y * blockDim.y + threadIdx.y);
+  if (thread_2D_id.x >= numCols || thread_2D_id.y >= numRows)
+    return;
+  const int thread_1D_id = thread_2D_id.y * numCols + thread_2D_id.x;
+
+  // 0,1
+  if (thread_2D_id.y)
+    d_out[thread_1D_id] += d_in[(thread_2D_id.y+1) * numCols + thread_2D_id.x]
+  // 1,0
+  if (thread_2D_id.x < numCols)
+    d_out[thread_1D_id] += d_in[thread_2D_id.y * numCols + (thread_2D_id.x+1)]
+  // 0,-1
+  if (thread_2D_id.y < numRows)
+    d_out[thread_1D_id] += d_in[(thread_2D_id.y-1) * numCols + thread_2D_id.x]
+  // -1,0
+  if (thread_2D_id.x)
+    d_out[thread_1D_id] += d_in[thread_2D_id.y * numCols + (thread_2D_id.x+1)]
+}
+
+__global__ void
+separateChannels(const uchar4* const inputImageRGBA,
+                 const size_t numRows,
+                 const size_t numCols,
+                 unsigned char* const redChannel,
+                 unsigned char* const greenChannel,
+                 unsigned char* const blueChannel)
+{
+  const int2 thread_2D_pos = make_int2( blockIdx.x * blockDim.x + threadIdx.x,
+                                        blockIdx.y * blockDim.y + threadIdx.y);
+  if ( thread_2D_pos.y >= numRows || thread_2D_pos.x >= numCols )
+    return;
+  const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
+
+  const uchar4 px = inputImageRGBA[thread_1D_pos];
+  redChannel[thread_1D_pos] = px.x;
+  greenChannel[thread_1D_pos] = px.y;
+  blueChannel[thread_1D_pos] = px.z;
+}
+
+__global__ void
+recombineChannels_within_interior(const unsigned char* const redChannel,
+                                  const unsigned char* const greenChannel,
+                                  const unsigned char* const blueChannel,
+                                  uchar4* const outputImageRGBA,
+                                  const size_t numRows,
+                                  const size_t numCols,
+                                  const unsigned char* const d_sourceMaskInteriorMap)
+{
+  const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
+                                      blockIdx.y * blockDim.y + threadIdx.y);
+  if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
+    return;
+  const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
+  if (d_sourceMaskInteriorMap[thread_1D_id] != 4)
+    return;
+
+  unsigned char red   = redChannel[thread_1D_id];
+  unsigned char green = greenChannel[thread_1D_id];
+  unsigned char blue  = blueChannel[thread_1D_id];
+
+  //Alpha should be 255 for no transparency
+  uchar4 outputPixel = make_uchar4(red, green, blue, 255);
+
+  outputImageRGBA[thread_1D_id] = outputPixel;
+}
+
+uchar4* const d_sourceImg;
+unsigned char* const d_sourceMask;
+
+unsigned char* const d_sourceMaskInteriorMap;
+
+uchar4* const d_targetImg;
+unsigned char* const d_targetRed;
+unsigned char* const d_targetGreen;
+unsigned char* const d_targetBlue;
+
+unsigned char* const d_sourceRed;
+unsigned char* const d_sourceGreen;
+unsigned char* const d_sourceBlue;
+
+float* const d_prevRed;
+float* const d_prevGreen;
+float* const d_prevBlue;
+float* const d_nextRed;
+float* const d_nextGreen;
+float* const d_nextBlue;
 
 void your_blend(const uchar4* const h_sourceImg,  //IN
                 const size_t numRowsSource, const size_t numColsSource,
                 const uchar4* const h_destImg, //IN
                 uchar4* const h_blendedImg) //OUT
 {
+  dim3 numThreads(32,32);
+  dim3 numBlocks(1 + numColsSource / numThreads.x, 1 + numRowsSource / numThreads.y);
+  const size_t img_size = sizeof(uchar4)*numColsSource*numRowsSource);
+  const size_t chan_size = sizeof(unsigned int)*numColsSource*numRowsSource);
 
-  /* To Recap here are the steps you need to implement
-  
-     1) Compute a mask of the pixels from the source image to be copied
-        The pixels that shouldn't be copied are completely white, they
-        have R=255, G=255, B=255.  Any other pixels SHOULD be copied.
 
-     2) Compute the interior and border regions of the mask.  An interior
-        pixel has all 4 neighbors also inside the mask.  A border pixel is
-        in the mask itself, but has at least one neighbor that isn't.
+  // 1) Compute a mask of the pixels from the source image to be copied
+     // The pixels that shouldn't be copied are completely white, they
+     // have R=255, G=255, B=255.  Any other pixels SHOULD be copied.
+  checkCudaErrors(cudaMalloc(&d_sourceImg, img_size);
+  checkCudaErrors(cudaMemcpy(&d_sourceImg, h_sourceImg, img_size, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMalloc(&d_sourceMask, chan_size);
+  checkCudaErrors(cudaMemset(&d_sourceMask, 0, chan_size);
+  map_source_to_mask<<<numBlocks, numThreads>>>(d_sourceImg, d_sourceMask, numRowsSource, numColsSource);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-     3) Separate out the incoming image into three separate channels
+  // 2) Compute the interior and border regions of the mask.  An interior
+  //    pixel has all 4 neighbors also inside the mask.  A border pixel is
+  //    in the mask itself, but has at least one neighbor that isn't.
+  checkCudaErrors(cudaMalloc(&d_sourceMaskInteriorMap, chan_size);
+  checkCudaErrors(cudaMemset(&d_sourceMaskInteriorMap, 0, chan_size);
+  stencil_2d_von_neumann<<<numBlocks, numThreads>>>(d_sourceMask, d_sourceMaskInteriorMap, numRowsSource, numColsSource);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-     4) Create two float(!) buffers for each color channel that will
-        act as our guesses.  Initialize them to the respective color
-        channel of the source image since that will act as our intial guess.
+  // 3) Separate out the incoming image into three separate channels
+  checkCudaErrors(cudaMalloc(&d_targetImg, img_size);
+  checkCudaErrors(cudaMemcpy(&d_targetImg, h_destImg, img_size, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMalloc(&d_targetRed, chan_size);
+  checkCudaErrors(cudaMalloc(&d_targetGreen, chan_size);
+  checkCudaErrors(cudaMalloc(&d_targetBlue, chan_size);
+  separateChannels<<<numBlocks, numThreads>>>(d_targetImg, numRowsSource, numColsSource,
+                                              d_targetRed, d_targetGreen, d_targetBlue)
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-     5) For each color channel perform the Jacobi iteration described 
-        above 800 times.
+  // 3.5) Separate out the source image into three separate channels
+  checkCudaErrors(cudaMalloc(&d_sourceRed, chan_size);
+  checkCudaErrors(cudaMalloc(&d_sourceGreen, chan_size);
+  checkCudaErrors(cudaMalloc(&d_sourceBlue, chan_size);
+  separateChannels<<<numBlocks, numThreads>>>(d_sourceImg, numRowsSource, numColsSource,
+                                              d_sourceRed, d_sourceGreen, d_sourceBlue)
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-     6) Create the output image by replacing all the interior pixels
-        in the destination image with the result of the Jacobi iterations.
-        Just cast the floating point values to unsigned chars since we have
-        already made sure to clamp them to the correct range.
+  // 4) Create two float(!) buffers for each color channel that will
+  //    act as our guesses.  Initialize them to the respective color
+  //    channel of the source image since that will act as our intial guess.
+  size_t size = sizeof(float)*numColsSource*numRowsSource);
+  checkCudaErrors(cudaMalloc(&d_prevRed, size));
+  checkCudaErrors(cudaMalloc(&d_prevGreen, size));
+  checkCudaErrors(cudaMalloc(&d_prevBlue, size));
+  checkCudaErrors(cudaMalloc(&d_nextRed, size));
+  checkCudaErrors(cudaMalloc(&d_nextGreen, size));
+  checkCudaErrors(cudaMalloc(&d_nextBlue, size));
 
-      Since this is final assignment we provide little boilerplate code to
-      help you.  Notice that all the input/output pointers are HOST pointers.
+  checkCudaErrors(cudaMemcpy(&d_prevRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(&d_prevGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(&d_prevBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(&d_nextRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(&d_nextGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(&d_nextBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
 
-      You will have to allocate all of your own GPU memory and perform your own
-      memcopies to get data in and out of the GPU memory.
+  // 5) For each color channel perform the Jacobi iteration described
+  //    above 800 times.
+  for (int i = 0; i < JACOBI_ITR; i++) {
+    if (i % 2 == 0) {
+      poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
+                                    d_nextRed, d_prevRed,
+                                    d_sourceRed, d_targetRed,
+                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    numRowsSource, numColsSource);
+      poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
+                                    d_nextGreen, d_prevGreen,
+                                    d_sourceGreen, d_targetGreen,
+                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    numRowsSource, numColsSource);
+      poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
+                                    d_nextBlue, d_prevBlue,
+                                    d_sourceBlue, d_targetBlue,
+                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    numRowsSource, numColsSource);
+    } else {
+      poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
+                                    d_prevRed, d_nextRed,
+                                    d_sourceRed, d_targetRed,
+                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    numRowsSource, numColsSource);
+      poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
+                                    d_prevGreen, d_nextGreen,
+                                    d_sourceGreen, d_targetGreen,
+                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    numRowsSource, numColsSource);
+      poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
+                                    d_prevBlue, d_nextBlue,
+                                    d_sourceBlue, d_targetBlue,
+                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    numRowsSource, numColsSource);
+    }
+    cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  }
 
-      Remember to wrap all of your calls with checkCudaErrors() to catch any
-      thing that might go wrong.  After each kernel call do:
+  // 6) Create the output image by replacing all the interior pixels
+  //    in the destination image with the result of the Jacobi iterations.
+  //    Just cast the floating point values to unsigned chars since we have
+  //    already made sure to clamp them to the correct range.
+  recombineChannels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
+                                                               d_prevGreen,
+                                                               d_prevBlue,
+                                                               d_sourceImg,
+                                                               numRowsSource,
+                                                               numColsSource,
+                                                               d_sourceMaskInteriorMap);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-      cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  checkCudaErrors(cudaMemcpy(&h_blendedImg, d_sourceImg, img_size, cudaMemcpyDeviceToHost));
 
-      to catch any errors that happened while executing the kernel.
-  */
+  //  Since this is final assignment we provide little boilerplate code to
+  //  help you.  Notice that all the input/output pointers are HOST pointers.
+
+  //  You will have to allocate all of your own GPU memory and perform your own
+  //  memcopies to get data in and out of the GPU memory.
+
+  //  Remember to wrap all of your calls with checkCudaErrors() to catch any
+  //  thing that might go wrong.  After each kernel call do:
+
+  //  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+  //  to catch any errors that happened while executing the kernel.
 }

@@ -193,6 +193,21 @@ recombine_blended_channels_within_interior(const float* const redChannel,
   outputImageRGBA[thread_1D_id] = outputPixel;
 }
 
+__global__ void
+copy_char_to_float(float* const large,
+                   const unsigned char* const small,
+                   const size_t numRows,
+                   const size_t numCols)
+{
+  const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
+                                      blockIdx.y * blockDim.y + threadIdx.y);
+  if (thread_2D_id.x >= numCols || thread_2D_id.y >= numRows)
+    return;
+  const int thread_1D_id = thread_2D_id.y * numCols + thread_2D_id.x;
+
+  large[thread_1D_id] = (float)small[thread_1D_id];
+}
+
 uchar4* d_sourceImg;
 unsigned char* d_sourceMask;
 
@@ -264,20 +279,21 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   // 4) Create two float(!) buffers for each color channel that will
   //    act as our guesses.  Initialize them to the respective color
   //    channel of the source image since that will act as our intial guess.
-  int size = sizeof(float)*numColsSource*numRowsSource;
+  const int size = sizeof(float)*numColsSource*numRowsSource;
   checkCudaErrors(cudaMalloc(&d_prevRed, size));
   checkCudaErrors(cudaMalloc(&d_prevGreen, size));
   checkCudaErrors(cudaMalloc(&d_prevBlue, size));
   checkCudaErrors(cudaMalloc(&d_nextRed, size));
   checkCudaErrors(cudaMalloc(&d_nextGreen, size));
   checkCudaErrors(cudaMalloc(&d_nextBlue, size));
-
-  checkCudaErrors(cudaMemcpy(d_prevRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(d_prevGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(d_prevBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(d_nextRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(d_nextGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(d_nextBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
+  // Can't do memcpy since each data unit is of different size
+  copy_char_to_float<<<numBlocks, numThreads>>>(d_prevRed, d_sourceRed, numRowsSource, numColsSource);
+  copy_char_to_float<<<numBlocks, numThreads>>>(d_prevGreen, d_sourceGreen, numRowsSource, numColsSource);
+  copy_char_to_float<<<numBlocks, numThreads>>>(d_prevBlue, d_sourceBlue, numRowsSource, numColsSource);
+  copy_char_to_float<<<numBlocks, numThreads>>>(d_nextRed, d_sourceRed, numRowsSource, numColsSource);
+  copy_char_to_float<<<numBlocks, numThreads>>>(d_nextGreen, d_sourceGreen, numRowsSource, numColsSource);
+  copy_char_to_float<<<numBlocks, numThreads>>>(d_nextBlue, d_sourceBlue, numRowsSource, numColsSource);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 5) For each color channel perform the Jacobi iteration described
   //    above 800 times.

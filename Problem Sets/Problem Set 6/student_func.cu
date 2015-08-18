@@ -119,7 +119,7 @@ map_source_to_mask(const uchar4* const d_sourceImg, unsigned char* const d_sourc
   const uchar4 px = d_sourceImg[thread_1D_id];
   int brightness = px.x + px.y + px.z;
   if (brightness == 765)
-    d_sourceMask[thread_1D_id] = 1;
+    d_sourceMask[thread_1D_id] = 0;
 }
 
 __global__ void
@@ -270,7 +270,9 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   checkCudaErrors(cudaMalloc(&d_sourceImg, img_size));
   checkCudaErrors(cudaMemcpy(d_sourceImg, h_sourceImg, img_size, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc(&d_sourceMask, chan_size));
-  checkCudaErrors(cudaMemset(d_sourceMask, 0, chan_size));
+  // inverse mask (source image is white everywhere where it should not be pasted), our mask will
+  // be 1 only where the source image should be pasted
+  checkCudaErrors(cudaMemset(d_sourceMask, 1, chan_size));
   map_source_to_mask<<<numBlocks, numThreads>>>(d_sourceImg, d_sourceMask, numRowsSource, numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
@@ -362,19 +364,19 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    in the destination image with the result of the Jacobi iterations.
   //    Just cast the floating point values to unsigned chars since we have
   //    already made sure to clamp them to the correct range.
-  // recombine_blended_channels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
-  //                                                                       d_prevGreen,
-  //                                                                       d_prevBlue,
-  //                                                                       d_targetImg,
-  //                                                                       numRowsSource,
-  //                                                                       numColsSource,
-  //                                                                       d_sourceMaskInteriorMap);
-  recombine_channels<<<numBlocks, numThreads>>>(d_sourceMask,
-                                                d_sourceMask,
-                                                d_sourceMask,
-                                                d_targetImg,
-                                                numRowsSource,
-                                                numColsSource);
+  recombine_blended_channels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
+                                                                        d_prevGreen,
+                                                                        d_prevBlue,
+                                                                        d_targetImg,
+                                                                        numRowsSource,
+                                                                        numColsSource,
+                                                                        d_sourceMaskInteriorMap);
+  // recombine_channels<<<numBlocks, numThreads>>>(d_sourceMask,
+  //                                               d_sourceMask,
+  //                                               d_sourceMask,
+  //                                               d_targetImg,
+  //                                               numRowsSource,
+  //                                               numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   checkCudaErrors(cudaMemcpy(h_blendedImg, d_targetImg, img_size, cudaMemcpyDeviceToHost));

@@ -222,7 +222,7 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   dim3 numThreads(32,32);
   dim3 numBlocks(1 + numColsSource / numThreads.x, 1 + numRowsSource / numThreads.y);
   const int img_size = sizeof(uchar4)*numColsSource*numRowsSource;
-  const int chan_size = sizeof(unsigned int)*numColsSource*numRowsSource;
+  const int chan_size = sizeof(unsigned char)*numColsSource*numRowsSource;
 
 
   // 1) Compute a mask of the pixels from the source image to be copied

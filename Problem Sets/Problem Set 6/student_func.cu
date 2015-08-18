@@ -134,16 +134,16 @@ stencil_2d_von_neumann(const unsigned char* const d_in, unsigned char* const d_o
 
   // 0,1
   if (thread_2D_id.y)
-    d_out[thread_1D_id] += d_in[(thread_2D_id.y+1) * numCols + thread_2D_id.x];
+    d_out[thread_1D_id] += d_in[(thread_2D_id.y-1) * numCols + thread_2D_id.x];
   // 1,0
-  if (thread_2D_id.x < numCols)
+  if (thread_2D_id.x < (numCols-1))
     d_out[thread_1D_id] += d_in[thread_2D_id.y * numCols + (thread_2D_id.x+1)];
   // 0,-1
-  if (thread_2D_id.y < numRows)
-    d_out[thread_1D_id] += d_in[(thread_2D_id.y-1) * numCols + thread_2D_id.x];
+  if (thread_2D_id.y < (numRows-1))
+    d_out[thread_1D_id] += d_in[(thread_2D_id.y+1) * numCols + thread_2D_id.x];
   // -1,0
   if (thread_2D_id.x)
-    d_out[thread_1D_id] += d_in[thread_2D_id.y * numCols + (thread_2D_id.x+1)];
+    d_out[thread_1D_id] += d_in[thread_2D_id.y * numCols + (thread_2D_id.x-1)];
 }
 
 __global__ void
@@ -259,6 +259,14 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 3) Separate out the incoming image into three separate channels
+  checkCudaErrors(cudaMalloc(&d_sourceRed, chan_size));
+  checkCudaErrors(cudaMalloc(&d_sourceGreen, chan_size));
+  checkCudaErrors(cudaMalloc(&d_sourceBlue, chan_size));
+  separateChannels<<<numBlocks, numThreads>>>(d_sourceImg, numRowsSource, numColsSource,
+                                              d_sourceRed, d_sourceGreen, d_sourceBlue);
+  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+
+  // 3.5) Separate out the target/destination image into three separate channels
   checkCudaErrors(cudaMalloc(&d_targetImg, img_size));
   checkCudaErrors(cudaMemcpy(d_targetImg, h_destImg, img_size, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc(&d_targetRed, chan_size));
@@ -266,14 +274,6 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   checkCudaErrors(cudaMalloc(&d_targetBlue, chan_size));
   separateChannels<<<numBlocks, numThreads>>>(d_targetImg, numRowsSource, numColsSource,
                                               d_targetRed, d_targetGreen, d_targetBlue);
-  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-
-  // 3.5) Separate out the source image into three separate channels
-  checkCudaErrors(cudaMalloc(&d_sourceRed, chan_size));
-  checkCudaErrors(cudaMalloc(&d_sourceGreen, chan_size));
-  checkCudaErrors(cudaMalloc(&d_sourceBlue, chan_size));
-  separateChannels<<<numBlocks, numThreads>>>(d_sourceImg, numRowsSource, numColsSource,
-                                              d_sourceRed, d_sourceGreen, d_sourceBlue);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 4) Create two float(!) buffers for each color channel that will

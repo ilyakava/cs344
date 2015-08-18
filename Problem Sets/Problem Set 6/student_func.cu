@@ -228,9 +228,9 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   // 1) Compute a mask of the pixels from the source image to be copied
      // The pixels that shouldn't be copied are completely white, they
      // have R=255, G=255, B=255.  Any other pixels SHOULD be copied.
-  checkCudaErrors(cudaMalloc(&d_sourceImg, img_size));
+  checkCudaErrors(cudaMalloc(d_sourceImg, img_size));
   checkCudaErrors(cudaMemcpy(d_sourceImg, h_sourceImg, img_size, cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMalloc(&d_sourceMask, chan_size));
+  checkCudaErrors(cudaMalloc(d_sourceMask, chan_size));
   checkCudaErrors(cudaMemset(d_sourceMask, 0, chan_size));
   map_source_to_mask<<<numBlocks, numThreads>>>(d_sourceImg, d_sourceMask, numRowsSource, numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
@@ -238,25 +238,25 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   // 2) Compute the interior and border regions of the mask.  An interior
   //    pixel has all 4 neighbors also inside the mask.  A border pixel is
   //    in the mask itself, but has at least one neighbor that isn't.
-  checkCudaErrors(cudaMalloc(&d_sourceMaskInteriorMap, chan_size));
+  checkCudaErrors(cudaMalloc(d_sourceMaskInteriorMap, chan_size));
   checkCudaErrors(cudaMemset(&d_sourceMaskInteriorMap, 0, chan_size));
   stencil_2d_von_neumann<<<numBlocks, numThreads>>>(d_sourceMask, d_sourceMaskInteriorMap, numRowsSource, numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 3) Separate out the incoming image into three separate channels
-  checkCudaErrors(cudaMalloc(&d_targetImg, img_size));
+  checkCudaErrors(cudaMalloc(d_targetImg, img_size));
   checkCudaErrors(cudaMemcpy(d_targetImg, h_destImg, img_size, cudaMemcpyHostToDevice));
-  checkCudaErrors(cudaMalloc(&d_targetRed, chan_size));
-  checkCudaErrors(cudaMalloc(&d_targetGreen, chan_size));
-  checkCudaErrors(cudaMalloc(&d_targetBlue, chan_size));
+  checkCudaErrors(cudaMalloc(d_targetRed, chan_size));
+  checkCudaErrors(cudaMalloc(d_targetGreen, chan_size));
+  checkCudaErrors(cudaMalloc(d_targetBlue, chan_size));
   separateChannels<<<numBlocks, numThreads>>>(d_targetImg, numRowsSource, numColsSource,
                                               d_targetRed, d_targetGreen, d_targetBlue);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 3.5) Separate out the source image into three separate channels
-  checkCudaErrors(cudaMalloc(&d_sourceRed, chan_size));
-  checkCudaErrors(cudaMalloc(&d_sourceGreen, chan_size));
-  checkCudaErrors(cudaMalloc(&d_sourceBlue, chan_size));
+  checkCudaErrors(cudaMalloc(d_sourceRed, chan_size));
+  checkCudaErrors(cudaMalloc(d_sourceGreen, chan_size));
+  checkCudaErrors(cudaMalloc(d_sourceBlue, chan_size));
   separateChannels<<<numBlocks, numThreads>>>(d_sourceImg, numRowsSource, numColsSource,
                                               d_sourceRed, d_sourceGreen, d_sourceBlue);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
@@ -265,12 +265,12 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    act as our guesses.  Initialize them to the respective color
   //    channel of the source image since that will act as our intial guess.
   int size = sizeof(float)*numColsSource*numRowsSource;
-  checkCudaErrors(cudaMalloc(&d_prevRed, size));
-  checkCudaErrors(cudaMalloc(&d_prevGreen, size));
-  checkCudaErrors(cudaMalloc(&d_prevBlue, size));
-  checkCudaErrors(cudaMalloc(&d_nextRed, size));
-  checkCudaErrors(cudaMalloc(&d_nextGreen, size));
-  checkCudaErrors(cudaMalloc(&d_nextBlue, size));
+  checkCudaErrors(cudaMalloc(d_prevRed, size));
+  checkCudaErrors(cudaMalloc(d_prevGreen, size));
+  checkCudaErrors(cudaMalloc(d_prevBlue, size));
+  checkCudaErrors(cudaMalloc(d_nextRed, size));
+  checkCudaErrors(cudaMalloc(d_nextGreen, size));
+  checkCudaErrors(cudaMalloc(d_nextBlue, size));
 
   checkCudaErrors(cudaMemcpy(d_prevRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
   checkCudaErrors(cudaMemcpy(d_prevGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));

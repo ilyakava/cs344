@@ -97,7 +97,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
     int neighbor_1D_id = (thread_2D_id.x + neighbors[i][0]) + (thread_2D_id.y + neighbors[i][1]) * numColsSource;
     if (d_sourceMaskInteriorMap[neighbor_1D_id] == 4)
       Sum1 += ImageGuess_prev[neighbor_1D_id];
-    else if (d_sourceMask == 1)
+    else if (d_sourceMask[neighbor_1D_id] == 1)
       Sum1 += (float)target[neighbor_1D_id];
     Sum2 += (float)(spx - source[neighbor_1D_id]);
   }

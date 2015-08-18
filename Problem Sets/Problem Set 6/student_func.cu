@@ -64,6 +64,7 @@
 
 // set this to an even number
 #define JACOBI_ITR 800
+#define INTERIOR_PX_VAL 5
 #include "utils.h"
 #include <thrust/host_vector.h>
 
@@ -78,7 +79,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
   if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
     return;
   const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
-  if (d_sourceMaskInteriorMap[thread_1D_id] != 4)
+  if (d_sourceMaskInteriorMap[thread_1D_id] != INTERIOR_PX_VAL)
     return;
 
   const unsigned char spx = source[thread_1D_id];
@@ -95,7 +96,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
   // off the edge of the image
   for (char i = 0; i < 4; i++) {
     int neighbor_1D_id = (thread_2D_id.x + neighbors[i][0]) + (thread_2D_id.y + neighbors[i][1]) * numColsSource;
-    if (d_sourceMaskInteriorMap[neighbor_1D_id] == 4)
+    if (d_sourceMaskInteriorMap[neighbor_1D_id] == INTERIOR_PX_VAL)
       Sum1 += ImageGuess_prev[neighbor_1D_id];
     else if (d_sourceMask[neighbor_1D_id] == 1)
       Sum1 += (float)target[neighbor_1D_id];
@@ -180,7 +181,7 @@ recombine_blended_channels_within_interior(const float* const redChannel,
   if (thread_2D_id.x >= numCols || thread_2D_id.y >= numRows)
     return;
   const int thread_1D_id = thread_2D_id.y * numCols + thread_2D_id.x;
-  if (d_sourceMaskInteriorMap[thread_1D_id] != 4)
+  if (d_sourceMaskInteriorMap[thread_1D_id] != INTERIOR_PX_VAL)
     return;
 
   unsigned char red   = redChannel[thread_1D_id];
@@ -206,7 +207,7 @@ copy_interior_char_to_float(float* const large,
     return;
   const int thread_1D_id = thread_2D_id.y * numCols + thread_2D_id.x;
 
-  if (d_sourceMaskInteriorMap[thread_1D_id] == 4)
+  if (d_sourceMaskInteriorMap[thread_1D_id] == INTERIOR_PX_VAL)
     large[thread_1D_id] = (float)small[thread_1D_id];
   else
     large[thread_1D_id] = 0.f;
@@ -284,7 +285,7 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    pixel has all 4 neighbors also inside the mask.  A border pixel is
   //    in the mask itself, but has at least one neighbor that isn't.
   checkCudaErrors(cudaMalloc(&d_sourceMaskInteriorMap, chan_size));
-  checkCudaErrors(cudaMemset(d_sourceMaskInteriorMap, 0, chan_size));
+  checkCudaErrors(cudaMemcpy(d_sourceMaskInteriorMap, d_sourceMask, chan_size, cudaMemcpyHostToDevice));
   stencil_2d_von_neumann<<<numBlocks, numThreads>>>(d_sourceMask, d_sourceMaskInteriorMap, numRowsSource, numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 

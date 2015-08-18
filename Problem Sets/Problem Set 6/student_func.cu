@@ -98,8 +98,8 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
     if (d_sourceMaskInteriorMap[neighbor_1D_id] == 4)
       Sum1 += ImageGuess_prev[neighbor_1D_id];
     else
-      Sum1 += target[neighbor_1D_id];
-    Sum2 += (spx - source[neighbor_1D_id]);
+      Sum1 += (float)target[neighbor_1D_id];
+    Sum2 += (float)(spx - source[neighbor_1D_id]);
   }
 
   float newVal = (Sum1 + Sum2) / 4.0f;

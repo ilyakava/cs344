@@ -177,7 +177,7 @@ recombine_blended_channels_within_interior(const float* const redChannel,
 {
   const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
                                       blockIdx.y * blockDim.y + threadIdx.y);
-  if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
+  if (thread_2D_id.x >= numCols || thread_2D_id.y >= numRows)
     return;
   const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
   if (d_sourceMaskInteriorMap[thread_1D_id] != 4)

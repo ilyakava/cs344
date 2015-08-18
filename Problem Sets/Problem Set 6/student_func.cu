@@ -194,10 +194,11 @@ recombine_blended_channels_within_interior(const float* const redChannel,
 }
 
 __global__ void
-copy_char_to_float(float* const large,
-                   const unsigned char* const small,
-                   const size_t numRows,
-                   const size_t numCols)
+copy_interior_char_to_float(float* const large,
+                            const unsigned char* const small,
+                            const size_t numRows,
+                            const size_t numCols,
+                            const unsigned char* const d_sourceMaskInteriorMap)
 {
   const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
                                       blockIdx.y * blockDim.y + threadIdx.y);
@@ -205,7 +206,10 @@ copy_char_to_float(float* const large,
     return;
   const int thread_1D_id = thread_2D_id.y * numCols + thread_2D_id.x;
 
-  large[thread_1D_id] = (float)small[thread_1D_id];
+  if (d_sourceMaskInteriorMap[thread_1D_id] == 4)
+    large[thread_1D_id] = (float)small[thread_1D_id];
+  else
+    large[thread_1D_id] = 0.f
 }
 
 __global__ void
@@ -313,12 +317,12 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   checkCudaErrors(cudaMalloc(&d_nextGreen, size));
   checkCudaErrors(cudaMalloc(&d_nextBlue, size));
   // Can't do memcpy since each data unit is of different size
-  copy_char_to_float<<<numBlocks, numThreads>>>(d_prevRed, d_sourceRed, numRowsSource, numColsSource);
-  copy_char_to_float<<<numBlocks, numThreads>>>(d_prevGreen, d_sourceGreen, numRowsSource, numColsSource);
-  copy_char_to_float<<<numBlocks, numThreads>>>(d_prevBlue, d_sourceBlue, numRowsSource, numColsSource);
-  copy_char_to_float<<<numBlocks, numThreads>>>(d_nextRed, d_sourceRed, numRowsSource, numColsSource);
-  copy_char_to_float<<<numBlocks, numThreads>>>(d_nextGreen, d_sourceGreen, numRowsSource, numColsSource);
-  copy_char_to_float<<<numBlocks, numThreads>>>(d_nextBlue, d_sourceBlue, numRowsSource, numColsSource);
+  copy_interior_char_to_float<<<numBlocks, numThreads>>>(d_prevRed, d_sourceRed, numRowsSource, numColsSource, d_sourceMaskInteriorMap);
+  copy_interior_char_to_float<<<numBlocks, numThreads>>>(d_prevGreen, d_sourceGreen, numRowsSource, numColsSource, d_sourceMaskInteriorMap);
+  copy_interior_char_to_float<<<numBlocks, numThreads>>>(d_prevBlue, d_sourceBlue, numRowsSource, numColsSource, d_sourceMaskInteriorMap);
+  copy_interior_char_to_float<<<numBlocks, numThreads>>>(d_nextRed, d_sourceRed, numRowsSource, numColsSource, d_sourceMaskInteriorMap);
+  copy_interior_char_to_float<<<numBlocks, numThreads>>>(d_nextGreen, d_sourceGreen, numRowsSource, numColsSource, d_sourceMaskInteriorMap);
+  copy_interior_char_to_float<<<numBlocks, numThreads>>>(d_nextBlue, d_sourceBlue, numRowsSource, numColsSource, d_sourceMaskInteriorMap);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 5) For each color channel perform the Jacobi iteration described

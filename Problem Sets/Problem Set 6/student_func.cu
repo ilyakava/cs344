@@ -209,9 +209,9 @@ copy_char_to_float(float* const large,
 }
 
 __global__ void
-recombine_channels(const float* const redChannel,
-                   const float* const greenChannel,
-                   const float* const blueChannel,
+recombine_channels(const unsigned char* const redChannel,
+                   const unsigned char* const greenChannel,
+                   const unsigned char* const blueChannel,
                    uchar4* const outputImageRGBA,
                    const size_t numRows,
                    const size_t numCols)

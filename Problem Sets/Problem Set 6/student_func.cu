@@ -339,15 +339,15 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    Just cast the floating point values to unsigned chars since we have
   //    already made sure to clamp them to the correct range.
   recombine_blended_channels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
-                                                               d_prevGreen,
-                                                               d_prevBlue,
-                                                               d_sourceImg,
-                                                               numRowsSource,
-                                                               numColsSource,
-                                                               d_sourceMaskInteriorMap);
+                                                                        d_prevGreen,
+                                                                        d_prevBlue,
+                                                                        d_targetImg,
+                                                                        numRowsSource,
+                                                                        numColsSource,
+                                                                        d_sourceMaskInteriorMap);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-  checkCudaErrors(cudaMemcpy(h_blendedImg, d_sourceImg, img_size, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_blendedImg, d_targetImg, img_size, cudaMemcpyDeviceToHost));
 
   //  Since this is final assignment we provide little boilerplate code to
   //  help you.  Notice that all the input/output pointers are HOST pointers.

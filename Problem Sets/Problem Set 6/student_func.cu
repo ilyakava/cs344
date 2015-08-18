@@ -102,7 +102,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
     Sum2 += (spx - source[neighbor_1D_id]);
   }
 
-  float newVal = (Sum1 + Sum2) / 4.0f;
+  float newVal = (Sum1 + Sum2 + ImageGuess_prev[thread_1D_id]) / 4.0f;
   ImageGuess_next[thread_1D_id] = fmin(255.0f, fmax(0.0f, newVal));
 }
 

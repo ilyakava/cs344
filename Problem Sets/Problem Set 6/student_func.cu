@@ -70,7 +70,7 @@
 __global__ void
 poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* const ImageGuess_prev,
                                   const unsigned char* const source, const unsigned char* const target,
-                                  const unsigned char* const d_sourceMaskInteriorMap, const unsigned char* const d_sourceMask,
+                                  const unsigned char* const d_sourceMaskInteriorMap,
                                   const size_t numRowsSource, const size_t numColsSource)
 {
   const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
@@ -78,7 +78,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
   if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
     return;
   const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
-  if (d_sourceMask[thread_1D_id] == 0 || d_sourceMaskInteriorMap[thread_1D_id] != 4)
+  if (d_sourceMaskInteriorMap[thread_1D_id] != 4)
     return;
 
   const unsigned char spx = source[thread_1D_id];
@@ -99,7 +99,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
       Sum1 += ImageGuess_prev[neighbor_1D_id];
     else
       Sum1 += target[neighbor_1D_id];
-    Sum2 += spx - source[neighbor_1D_id];
+    Sum2 += (spx - source[neighbor_1D_id]);
   }
 
   float newVal = (Sum1 + Sum2) / 4.0f;
@@ -328,33 +328,33 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
       poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
                                     d_nextRed, d_prevRed,
                                     d_sourceRed, d_targetRed,
-                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    d_sourceMaskInteriorMap,
                                     numRowsSource, numColsSource);
       poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
                                     d_nextGreen, d_prevGreen,
                                     d_sourceGreen, d_targetGreen,
-                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    d_sourceMaskInteriorMap,
                                     numRowsSource, numColsSource);
       poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
                                     d_nextBlue, d_prevBlue,
                                     d_sourceBlue, d_targetBlue,
-                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    d_sourceMaskInteriorMap,
                                     numRowsSource, numColsSource);
     } else {
       poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
                                     d_prevRed, d_nextRed,
                                     d_sourceRed, d_targetRed,
-                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    d_sourceMaskInteriorMap,
                                     numRowsSource, numColsSource);
       poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
                                     d_prevGreen, d_nextGreen,
                                     d_sourceGreen, d_targetGreen,
-                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    d_sourceMaskInteriorMap,
                                     numRowsSource, numColsSource);
       poisson_equation_jacobi_iteration<<<numBlocks, numThreads>>>(
                                     d_prevBlue, d_nextBlue,
                                     d_sourceBlue, d_targetBlue,
-                                    d_sourceMaskInteriorMap, d_sourceMask,
+                                    d_sourceMaskInteriorMap,
                                     numRowsSource, numColsSource);
     }
     cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());

@@ -356,6 +356,23 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
 
   checkCudaErrors(cudaMemcpy(h_blendedImg, d_targetImg, img_size, cudaMemcpyDeviceToHost));
 
+  checkCudaErrors(cudaFree(d_sourceImg));
+  checkCudaErrors(cudaFree(d_sourceMask));
+  checkCudaErrors(cudaFree(d_sourceMaskInteriorMap));
+  checkCudaErrors(cudaFree(d_targetImg));
+  checkCudaErrors(cudaFree(d_targetRed));
+  checkCudaErrors(cudaFree(d_targetGreen));
+  checkCudaErrors(cudaFree(d_targetBlue));
+  checkCudaErrors(cudaFree(d_sourceRed));
+  checkCudaErrors(cudaFree(d_sourceGreen));
+  checkCudaErrors(cudaFree(d_sourceBlue));
+  checkCudaErrors(cudaFree(d_prevRed));
+  checkCudaErrors(cudaFree(d_prevGreen));
+  checkCudaErrors(cudaFree(d_prevBlue));
+  checkCudaErrors(cudaFree(d_nextRed));
+  checkCudaErrors(cudaFree(d_nextGreen));
+  checkCudaErrors(cudaFree(d_nextBlue));
+
   //  Since this is final assignment we provide little boilerplate code to
   //  help you.  Notice that all the input/output pointers are HOST pointers.
 

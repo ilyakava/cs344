@@ -88,8 +88,8 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
     {0,-1},
     {-1,0}
   };
-  int Sum1 = 0;
-  int Sum2 = 0;
+  float Sum1 = 0.0f;
+  float Sum2 = 0.0f;
 
   // Note: no neighbor bounds checking since the mask is assumed to not flow
   // off the edge of the image
@@ -102,7 +102,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
     Sum2 += (spx - source[neighbor_1D_id]);
   }
 
-  float newVal = (Sum1 + Sum2 + ImageGuess_prev[thread_1D_id]) / 4.0f;
+  float newVal = (Sum1 + Sum2) / 4.0f;
   ImageGuess_next[thread_1D_id] = fmin(255.0f, fmax(0.0f, newVal));
 }
 

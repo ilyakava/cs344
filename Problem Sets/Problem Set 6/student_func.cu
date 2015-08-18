@@ -239,7 +239,7 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    pixel has all 4 neighbors also inside the mask.  A border pixel is
   //    in the mask itself, but has at least one neighbor that isn't.
   checkCudaErrors(cudaMalloc(&d_sourceMaskInteriorMap, chan_size));
-  checkCudaErrors(cudaMemset(&d_sourceMaskInteriorMap, 0, chan_size));
+  checkCudaErrors(cudaMemset(d_sourceMaskInteriorMap, 0, chan_size));
   stencil_2d_von_neumann<<<numBlocks, numThreads>>>(d_sourceMask, d_sourceMaskInteriorMap, numRowsSource, numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 

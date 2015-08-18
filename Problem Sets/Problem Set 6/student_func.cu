@@ -103,7 +103,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
   }
 
   float newVal = (Sum1 + Sum2) / 4.0f;
-  ImageGuess_next[thread_1D_id] = min(255, max(0, newVal));
+  ImageGuess_next[thread_1D_id] = fmin(255.0f, fmax(0.0f, newVal));
 }
 
 __global__ void
@@ -167,13 +167,13 @@ separateChannels(const uchar4* const inputImageRGBA,
 }
 
 __global__ void
-recombineChannels_within_interior(const unsigned char* const redChannel,
-                                  const unsigned char* const greenChannel,
-                                  const unsigned char* const blueChannel,
-                                  uchar4* const outputImageRGBA,
-                                  const size_t numRows,
-                                  const size_t numCols,
-                                  const unsigned char* const d_sourceMaskInteriorMap)
+recombine_blended_channels_within_interior(const float* const redChannel,
+                                           const float* const greenChannel,
+                                           const float* const blueChannel,
+                                           uchar4* const outputImageRGBA,
+                                           const size_t numRows,
+                                           const size_t numCols,
+                                           const unsigned char* const d_sourceMaskInteriorMap)
 {
   const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
                                       blockIdx.y * blockDim.y + threadIdx.y);
@@ -221,17 +221,17 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
 {
   dim3 numThreads(32,32);
   dim3 numBlocks(1 + numColsSource / numThreads.x, 1 + numRowsSource / numThreads.y);
-  const size_t img_size = sizeof(uchar4)*numColsSource*numRowsSource;
-  const size_t chan_size = sizeof(unsigned int)*numColsSource*numRowsSource;
+  const int img_size = sizeof(uchar4)*numColsSource*numRowsSource;
+  const int chan_size = sizeof(unsigned int)*numColsSource*numRowsSource;
 
 
   // 1) Compute a mask of the pixels from the source image to be copied
      // The pixels that shouldn't be copied are completely white, they
      // have R=255, G=255, B=255.  Any other pixels SHOULD be copied.
   checkCudaErrors(cudaMalloc(&d_sourceImg, img_size));
-  checkCudaErrors(cudaMemcpy(&d_sourceImg, h_sourceImg, img_size, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_sourceImg, h_sourceImg, img_size, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc(&d_sourceMask, chan_size));
-  checkCudaErrors(cudaMemset(&d_sourceMask, 0, chan_size));
+  checkCudaErrors(cudaMemset(d_sourceMask, 0, chan_size));
   map_source_to_mask<<<numBlocks, numThreads>>>(d_sourceImg, d_sourceMask, numRowsSource, numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
@@ -245,12 +245,12 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
 
   // 3) Separate out the incoming image into three separate channels
   checkCudaErrors(cudaMalloc(&d_targetImg, img_size));
-  checkCudaErrors(cudaMemcpy(&d_targetImg, h_destImg, img_size, cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_targetImg, h_destImg, img_size, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMalloc(&d_targetRed, chan_size));
   checkCudaErrors(cudaMalloc(&d_targetGreen, chan_size));
   checkCudaErrors(cudaMalloc(&d_targetBlue, chan_size));
   separateChannels<<<numBlocks, numThreads>>>(d_targetImg, numRowsSource, numColsSource,
-                                              d_targetRed, d_targetGreen, d_targetBlue)
+                                              d_targetRed, d_targetGreen, d_targetBlue);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 3.5) Separate out the source image into three separate channels
@@ -258,13 +258,13 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   checkCudaErrors(cudaMalloc(&d_sourceGreen, chan_size));
   checkCudaErrors(cudaMalloc(&d_sourceBlue, chan_size));
   separateChannels<<<numBlocks, numThreads>>>(d_sourceImg, numRowsSource, numColsSource,
-                                              d_sourceRed, d_sourceGreen, d_sourceBlue)
+                                              d_sourceRed, d_sourceGreen, d_sourceBlue);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // 4) Create two float(!) buffers for each color channel that will
   //    act as our guesses.  Initialize them to the respective color
   //    channel of the source image since that will act as our intial guess.
-  size_t size = sizeof(float)*numColsSource*numRowsSource;
+  int size = sizeof(float)*numColsSource*numRowsSource;
   checkCudaErrors(cudaMalloc(&d_prevRed, size));
   checkCudaErrors(cudaMalloc(&d_prevGreen, size));
   checkCudaErrors(cudaMalloc(&d_prevBlue, size));
@@ -272,12 +272,12 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   checkCudaErrors(cudaMalloc(&d_nextGreen, size));
   checkCudaErrors(cudaMalloc(&d_nextBlue, size));
 
-  checkCudaErrors(cudaMemcpy(&d_prevRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(&d_prevGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(&d_prevBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(&d_nextRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(&d_nextGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
-  checkCudaErrors(cudaMemcpy(&d_nextBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(d_prevRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(d_prevGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(d_prevBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(d_nextRed, d_sourceRed, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(d_nextGreen, d_sourceGreen, size, cudaMemcpyDeviceToDevice));
+  checkCudaErrors(cudaMemcpy(d_nextBlue, d_sourceBlue, size, cudaMemcpyDeviceToDevice));
 
   // 5) For each color channel perform the Jacobi iteration described
   //    above 800 times.
@@ -322,7 +322,7 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    in the destination image with the result of the Jacobi iterations.
   //    Just cast the floating point values to unsigned chars since we have
   //    already made sure to clamp them to the correct range.
-  recombineChannels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
+  recombine_blended_channels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
                                                                d_prevGreen,
                                                                d_prevBlue,
                                                                d_sourceImg,
@@ -331,7 +331,7 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
                                                                d_sourceMaskInteriorMap);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
-  checkCudaErrors(cudaMemcpy(&h_blendedImg, d_sourceImg, img_size, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(h_blendedImg, d_sourceImg, img_size, cudaMemcpyDeviceToHost));
 
   //  Since this is final assignment we provide little boilerplate code to
   //  help you.  Notice that all the input/output pointers are HOST pointers.

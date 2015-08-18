@@ -369,9 +369,9 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //                                                                       numRowsSource,
   //                                                                       numColsSource,
   //                                                                       d_sourceMaskInteriorMap);
-  recombine_channels<<<numBlocks, numThreads>>>(d_sourceMaskInteriorMap,
-                                                d_sourceMaskInteriorMap,
-                                                d_sourceMaskInteriorMap,
+  recombine_channels<<<numBlocks, numThreads>>>(d_sourceMask,
+                                                d_sourceMask,
+                                                d_sourceMask,
                                                 d_targetImg,
                                                 numRowsSource,
                                                 numColsSource);

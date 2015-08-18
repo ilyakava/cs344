@@ -208,6 +208,30 @@ copy_char_to_float(float* const large,
   large[thread_1D_id] = (float)small[thread_1D_id];
 }
 
+__global__ void
+recombine_channels(const float* const redChannel,
+                   const float* const greenChannel,
+                   const float* const blueChannel,
+                   uchar4* const outputImageRGBA,
+                   const size_t numRows,
+                   const size_t numCols)
+{
+  const int2 thread_2D_id = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
+                                      blockIdx.y * blockDim.y + threadIdx.y);
+  if (thread_2D_id.x >= numCols || thread_2D_id.y >= numRows)
+    return;
+  const int thread_1D_id = thread_2D_id.y * numCols + thread_2D_id.x;
+
+  unsigned char red   = redChannel[thread_1D_id];
+  unsigned char green = greenChannel[thread_1D_id];
+  unsigned char blue  = blueChannel[thread_1D_id];
+
+  //Alpha should be 255 for no transparency
+  uchar4 outputPixel = make_uchar4(red, green, blue, 255);
+
+  outputImageRGBA[thread_1D_id] = outputPixel;
+}
+
 uchar4* d_sourceImg;
 unsigned char* d_sourceMask;
 
@@ -338,13 +362,19 @@ void your_blend(const uchar4* const h_sourceImg,  //IN
   //    in the destination image with the result of the Jacobi iterations.
   //    Just cast the floating point values to unsigned chars since we have
   //    already made sure to clamp them to the correct range.
-  recombine_blended_channels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
-                                                                        d_prevGreen,
-                                                                        d_prevBlue,
-                                                                        d_targetImg,
-                                                                        numRowsSource,
-                                                                        numColsSource,
-                                                                        d_sourceMaskInteriorMap);
+  // recombine_blended_channels_within_interior<<<numBlocks, numThreads>>>(d_prevRed,
+  //                                                                       d_prevGreen,
+  //                                                                       d_prevBlue,
+  //                                                                       d_targetImg,
+  //                                                                       numRowsSource,
+  //                                                                       numColsSource,
+  //                                                                       d_sourceMaskInteriorMap);
+  recombine_channels<<<numBlocks, numThreads>>>(d_sourceMaskInteriorMap,
+                                                d_sourceMaskInteriorMap,
+                                                d_sourceMaskInteriorMap,
+                                                d_targetImg,
+                                                numRowsSource,
+                                                numColsSource);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   checkCudaErrors(cudaMemcpy(h_blendedImg, d_targetImg, img_size, cudaMemcpyDeviceToHost));

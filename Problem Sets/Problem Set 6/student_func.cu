@@ -78,7 +78,7 @@ poisson_equation_jacobi_iteration(float* const ImageGuess_next, const float* con
   if (thread_2D_id.x >= numColsSource || thread_2D_id.y >= numRowsSource)
     return;
   const int thread_1D_id = thread_2D_id.y * numColsSource + thread_2D_id.x;
-  if (d_sourceMask[thread_1D_id] == 0)
+  if (d_sourceMask[thread_1D_id] == 0 || d_sourceMaskInteriorMap[thread_1D_id] != 4)
     return;
 
   const unsigned char spx = source[thread_1D_id];

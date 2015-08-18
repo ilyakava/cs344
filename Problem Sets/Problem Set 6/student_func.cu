@@ -209,7 +209,7 @@ copy_interior_char_to_float(float* const large,
   if (d_sourceMaskInteriorMap[thread_1D_id] == 4)
     large[thread_1D_id] = (float)small[thread_1D_id];
   else
-    large[thread_1D_id] = 0.f
+    large[thread_1D_id] = 0.f;
 }
 
 __global__ void

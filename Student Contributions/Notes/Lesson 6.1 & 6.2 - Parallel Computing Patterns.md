@@ -99,9 +99,7 @@ Big picture:
         - have multiple hash tables/functions, iterate to kick out old items (must be atomic) in tables until all items are hashed, give up after some limit of iterations if its not possible
             - lookup in multiple tables (have to know when of the table lookups is right) although they are constant time (keeps all threads busy)
 
-# Problem Set 6
-
-[Seamless image cloning](http://www.ctralie.com/Teaching/PoissonImageEditing/):
+# Problem Set 6 - [Seamless image cloning](http://www.ctralie.com/Teaching/PoissonImageEditing/):
 
 - also called Poisson Image Editing
 - given image A and B, and a mask for where to put B in A: blend the two images

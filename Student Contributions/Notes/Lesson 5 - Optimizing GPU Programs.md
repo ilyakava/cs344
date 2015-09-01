@@ -195,7 +195,7 @@ Our Limits: Time spent fetching data, or ~~time spent computing~~
 - also helps fill gpu with many problems with limited parallelisms
 - for more: check out streams and events is CUDA programming guide
 
-# Problem set 5
+# Problem set 5 - Faster Histogram
 
 1. sort input data into coarse bins
 2. Local histogram for local bins

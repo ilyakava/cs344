@@ -105,7 +105,7 @@ Scan is efficient on GPUs thanks to Blelloch, and so its the core of a number of
 
 ## key value sorts
 
-## Problem Set 4
+## Problem Set 4 - Radix Sort
 
 Factors nicely into 3 different parallel operations:
 1. stencil

@@ -92,7 +92,9 @@ Shared memory can save us global memory bandwidth (calculate by summing all read
         - sort ascending by key, reduce within a key (advantage of contiguous memory)
 - plus combination of above
 
-## Tone Mapping (HW)
+## Problem Set 3 - Histogram + Scan
+
+Tone Mapping
 
 - process of mapping image of wide range of brightness values to narrow range
 - Histogram equalization
@@ -105,6 +107,3 @@ Shared memory can save us global memory bandwidth (calculate by summing all read
         - find min/max with parallel reduce
         - use atomicAdd (at first)
     - scan histogram
-
-- Questions:
-    - how much shared memory are we limited to?

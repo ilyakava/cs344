@@ -71,3 +71,5 @@ Each thread knows its index in its thread, and in its block.
 Multiple dimensional layouts of blocks and threads are possible (1,2,3D for both grid of blocks, and grids of threads). (Blocks in y dimension, threads in x dimension).
 
 GPUs are good at MAP, b/c of large number of processors, optimize for throughput.
+
+# Problem Set 1 - Convert to Greyscale

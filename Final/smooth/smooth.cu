@@ -4,6 +4,9 @@
 #include "compare.h"
 #include "gputimer.h"
 
+#define ARRAY_SIZE 4096
+#define BLOCK_SIZE 256
+
 // Reference
 __global__ void smooth(float * v_new, const float * v) {
     int myIdx = threadIdx.x * gridDim.x + blockIdx.x;
@@ -16,18 +19,48 @@ __global__ void smooth(float * v_new, const float * v) {
     v_new[myIdx] = 0.25f * myLeftElt + 0.5f * myElt + 0.25f * myRightElt;
 }
 
-// Your code
+// More threads, homogenous parallelism, 0.007786 ms avg
 __global__ void smooth_shared(float * v_new, const float * v) {
     extern __shared__ float s[];
-    // TODO: Fill in the rest of this function
-    return v[0];
+    int tid = threadIdx.x;
+    int copyFromIdx = blockIdx.x * BLOCK_SIZE + tid - 1;
+    copyFromIdx = min(ARRAY_SIZE-1, copyFromIdx);
+    copyFromIdx = max(0, copyFromIdx);
+    s[tid] = v[copyFromIdx];
+    __syncthreads();
+    if (tid == 0 || tid == (blockDim.x - 1))
+        return;
+
+    float myElt = s[tid];
+    float myLeftElt = s[tid-1];
+    float myRightElt = s[tid+1];
+    v_new[copyFromIdx] = 0.25f * myLeftElt + 0.5f * myElt + 0.25f * myRightElt;
+}
+
+// Less threads, heterogeneous parallelism (more work per thread), 0.008085 ms
+// as we expect more work on fewer threads + divergence makes this slower.
+__global__ void smooth_shared2(float * v_new, const float * v) {
+    extern __shared__ float s[];
+    int tid = threadIdx.x;
+    int myIdx = blockIdx.x * BLOCK_SIZE + tid;
+    s[tid+1] = v[myIdx];
+    if (tid == 0) {
+        int leftIdx = max(0, myIdx - 1);
+        s[tid] = v[leftIdx];
+    } else if (tid == (blockDim.x-1)) {
+        int rightIdx = min(ARRAY_SIZE-1, myIdx + 1);
+        s[tid+2] = v[rightIdx];
+    }
+    __syncthreads();
+
+    float myElt = s[tid+1];
+    float myLeftElt = s[tid];
+    float myRightElt = s[tid+2];
+    v_new[myIdx] = 0.25f * myLeftElt + 0.5f * myElt + 0.25f * myRightElt;
 }
 
 int main(int argc, char **argv)
 {
-
-    const int ARRAY_SIZE = 4096;
-    const int BLOCK_SIZE = 256;
     const int ARRAY_BYTES = ARRAY_SIZE * sizeof(float);
 
     // generate the input array on the host
@@ -54,7 +87,7 @@ int main(int argc, char **argv)
     cudaMalloc((void **) &d_out_shared, ARRAY_BYTES);
 
     // transfer the input array to the GPU
-    cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice); 
+    cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice);
 
     // cudaEvent_t start, stop;
     // cudaEventCreate(&start);
@@ -63,13 +96,14 @@ int main(int argc, char **argv)
     smooth<<<ARRAY_SIZE / BLOCK_SIZE, BLOCK_SIZE>>>(d_out, d_in);
     GpuTimer timer;
     timer.Start();
-    smooth_shared<<<ARRAY_SIZE / BLOCK_SIZE, BLOCK_SIZE, (BLOCK_SIZE + 2) * sizeof(float)>>>(d_out_shared, d_in);
+    smooth_shared<<<ARRAY_SIZE / BLOCK_SIZE, BLOCK_SIZE + 2, (BLOCK_SIZE + 2) * sizeof(float)>>>(d_out_shared, d_in);
+    // smooth_shared2<<<ARRAY_SIZE / BLOCK_SIZE, BLOCK_SIZE, (BLOCK_SIZE + 2) * sizeof(float)>>>(d_out_shared, d_in);
     timer.Stop();
 
     printf("Your code executed in %g ms\n", timer.Elapsed());
     // cudaEventSynchronize(stop);
     // float elapsedTime;
-    // cudaEventElapsedTime(&elapsedTime, start, stop);    
+    // cudaEventElapsedTime(&elapsedTime, start, stop);
 
     // copy back the result from GPU
     cudaMemcpy(h_out, d_out, ARRAY_BYTES, cudaMemcpyDeviceToHost);
@@ -82,6 +116,6 @@ int main(int argc, char **argv)
     cudaFree(d_in);
     cudaFree(d_out);
     cudaFree(d_out_shared);
-        
+
     return 0;
 }

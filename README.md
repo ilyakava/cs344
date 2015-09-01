@@ -1,11 +1,13 @@
 [cs344](https://www.udacity.com/course/intro-to-parallel-programming--cs344)
 =====
 
-Introduction to Parallel Programming class code
+Introduction to Parallel Programming Udacity class code
+
+Includes student notes for [entire course](https://github.com/ilyakava/cs344/tree/master/Student%20Contributions/Notes), solutions to all [Problem sets](https://github.com/ilyakava/cs344/tree/master/Problem%20Sets), completed code segments of the [Final Assessment](https://github.com/ilyakava/cs344/tree/master/Final).
 
 # Building on OS X
 
-These instructions are for OS X 10.9 "Mavericks", and have been tested on Ubuntu 14.10.
+These instructions are for OS X 10.9 "Mavericks", and have also been successfully tested on Ubuntu 14.10.
 
 * Step 1. Build and install OpenCV. The best way to do this is with
 Homebrew. However, you must slightly alter the Homebrew OpenCV

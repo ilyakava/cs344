@@ -12,12 +12,39 @@ __global__ void batcherBitonicMergesort64(float * d_out, const float * d_in)
     int tid  = threadIdx.x;
     sdata[tid] = d_in[tid];
     __syncthreads();
-    
+
     for (int stage = 0; stage <= 5; stage++)
     {
+        int withinBoxOffset = 1<<stage;
+        int boxStartInterval = withinBoxOffset<<1;
+        // calculated at the beginning of each stage
+        int ithBox = tid / boxStartInterval;
         for (int substage = stage; substage >= 0; substage--)
         {
-            // TODO
+            withinBoxOffset = 1<<substage;
+            boxStartInterval = withinBoxOffset<<1;
+            int jthThreadInBox = tid ? tid % boxStartInterval : 0;
+
+            if (((ithBox + 1) % 2) == 1) {
+                // top down
+                if (jthThreadInBox < withinBoxOffset) {
+                    float tmp = sdata[tid];
+                    if (sdata[tid+withinBoxOffset] < tmp) {
+                        sdata[tid] = sdata[tid+withinBoxOffset];
+                        sdata[tid+withinBoxOffset] = tmp;
+                    }
+                }
+            } else {
+                // bottom up
+                if (jthThreadInBox >= withinBoxOffset) {
+                    float tmp = sdata[tid];
+                    if (sdata[tid-withinBoxOffset] < tmp) {
+                        sdata[tid] = sdata[tid-withinBoxOffset];
+                        sdata[tid-withinBoxOffset] = tmp;
+                    }
+                }
+            }
+            __syncthreads();
         }
     }
 
@@ -56,24 +83,24 @@ int main(int argc, char **argv)
     cudaMalloc((void **) &d_out, ARRAY_BYTES);
 
     // transfer the input array to the GPU
-    cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice); 
+    cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice);
 
     // launch the kernel
     GpuTimer timer;
     timer.Start();
     batcherBitonicMergesort64<<<1, ARRAY_SIZE, ARRAY_SIZE * sizeof(float)>>>(d_out, d_in);
     timer.Stop();
-    
+
     printf("Your code executed in %g ms\n", timer.Elapsed());
-    
+
     // copy back the sum from GPU
     cudaMemcpy(h_out, d_out, ARRAY_BYTES, cudaMemcpyDeviceToHost);
 
     compare(h_out, h_sorted, ARRAY_SIZE);
-  
+
     // free GPU memory allocation
     cudaFree(d_in);
     cudaFree(d_out);
-        
+
     return 0;
 }

@@ -24,6 +24,17 @@ __device__ unsigned int shared_reduce(unsigned int p, volatile unsigned int * s)
     // 31, you're doing it wrong)
     //
     // TODO: Fill in the rest of this function
+    int tid = threadIdx.x;
+    s[tid] = p;
+    __syncthreads();
+
+    for (int ithEl = 2; ithEl <= 32; ithEl<<=1) {
+        int neighborOffset = ithEl>>1;
+        if ((((tid + 1) % ithEl) == 1) && ((tid + neighborOffset) < 32)) {
+            s[tid] += s[tid + neighborOffset];
+        }
+        __syncthreads();
+    }
 
     return s[0];
 }
@@ -63,7 +74,7 @@ int main(int argc, char **argv)
     cudaMalloc((void **) &d_out_shared, sizeof(unsigned int));
 
     // transfer the input array to the GPU
-    cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice); 
+    cudaMemcpy(d_in, h_in, ARRAY_BYTES, cudaMemcpyHostToDevice);
 
     GpuTimer timer;
     timer.Start();
@@ -76,9 +87,9 @@ int main(int argc, char **argv)
 
     unsigned int h_out_shared;
     // copy back the sum from GPU
-    cudaMemcpy(&h_out_shared, d_out_shared, sizeof(unsigned int), 
+    cudaMemcpy(&h_out_shared, d_out_shared, sizeof(unsigned int),
                cudaMemcpyDeviceToHost);
-    
+
     compare(h_out_shared, sum);
 
     // free GPU memory allocation
